@@ -70,7 +70,7 @@ export const getAllSpots = async (coords?: Coords): Promise<Spot[]> => {
         collection(db, SPOTS_COLLECTION),
         where('codePostal', '>=', minCP),
         where('codePostal', '<=', maxCP),
-        limit(300)
+        limit(FIRESTORE_SPOTS_LIMIT)
       );
       const snapshot = await getDocs(q);
       const spots = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Spot));

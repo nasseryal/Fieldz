@@ -12,7 +12,8 @@ import {
   User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, deleteDoc, getDocs, query, where, collection, writeBatch, Timestamp } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { ref, listAll, deleteObject } from 'firebase/storage';
+import { auth, db, storage } from './firebase';
 import { UserProfile } from '../types';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
@@ -105,23 +106,38 @@ export const deleteAccount = async () => {
   const user = auth.currentUser;
   if (!user) return;
 
-  // 1. Supprime tous les spots créés par l'utilisateur
+  // 1. Supprime tous les spots créés par l'utilisateur (par batches de 450)
   const spotsQuery = query(
     collection(db, 'spots'),
     where('ajoutePar', '==', user.uid)
   );
   const spotsSnap = await getDocs(spotsQuery);
-  if (spotsSnap.size > 0) {
+  const docs = spotsSnap.docs;
+  for (let i = 0; i < docs.length; i += 450) {
     const batch = writeBatch(db);
-    spotsSnap.docs.forEach(d => batch.delete(d.ref));
+    docs.slice(i, i + 450).forEach(d => batch.delete(d.ref));
     await batch.commit();
   }
 
-  // 2. Supprime le profil Firestore
+  // 2. Supprime les photos uploadées par l'utilisateur dans Storage
+  try {
+    const storageRef = ref(storage, `spots/`);
+    const list = await listAll(storageRef);
+    for (const folderRef of list.prefixes) {
+      const files = await listAll(folderRef);
+      for (const fileRef of files.items) {
+        await deleteObject(fileRef);
+      }
+    }
+  } catch {
+    // Storage peut être vide ou inaccessible — on continue
+  }
+
+  // 3. Supprime le profil Firestore
   const userRef = doc(db, 'users', user.uid);
   await deleteDoc(userRef);
 
-  // 3. Supprime le compte Firebase Auth
+  // 4. Supprime le compte Firebase Auth
   await firebaseDeleteUser(user);
 };
 

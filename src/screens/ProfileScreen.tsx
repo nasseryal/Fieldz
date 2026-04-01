@@ -18,8 +18,8 @@ import { useAuth } from '../hooks/useAuth';
 import { signOut, deleteAccount } from '../services/auth';
 import { FieldzLogo } from '../components/FieldzLogo';
 
-// Email admin pour cacher la section import
-const ADMIN_EMAIL = 'nasseryal@gmail.com';
+// Email admin — dans une variable d'env pour ne pas être en dur
+const ADMIN_EMAIL = process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? '';
 
 export const ProfileScreen: React.FC = () => {
   const { user, profile } = useAuth();

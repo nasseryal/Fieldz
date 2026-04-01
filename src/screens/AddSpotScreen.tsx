@@ -62,13 +62,8 @@ export const AddSpotScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Upload la photo si disponible
-      let photoUrl = '';
-      if (photoUri) {
-        photoUrl = await uploadSpotPhoto(photoUri, `temp_${Date.now()}`);
-      }
-
-      await addSpot({
+      // Crée le spot d'abord pour obtenir l'ID réel
+      const spotId = await addSpot({
         nom,
         sport: sportId,
         latitude: location.latitude,
@@ -79,10 +74,15 @@ export const AddSpotScreen: React.FC = () => {
         acces,
         prixEstime: acces === 'payant' ? prix : undefined,
         equipements: [],
-        photos: photoUrl ? [photoUrl] : [],
+        photos: [],
         source: 'utilisateur',
         ajoutePar: user?.uid,
       });
+
+      // Upload la photo avec l'ID réel du spot
+      if (photoUri) {
+        await uploadSpotPhoto(photoUri, spotId);
+      }
 
       Alert.alert('Bravo ! 🎉', 'Ton spot a été ajouté avec succès');
       // Reset le formulaire
@@ -247,8 +247,12 @@ export const AddSpotScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.photoButton}
                 onPress={async () => {
-                  const uri = await takePhoto();
-                  if (uri) setPhotoUri(uri);
+                  try {
+                    const uri = await takePhoto();
+                    if (uri) setPhotoUri(uri);
+                  } catch {
+                    Alert.alert('Erreur', 'Impossible d\'ouvrir l\'appareil photo.');
+                  }
                 }}
               >
                 <Text style={styles.photoButtonText}>📸 Prendre une photo</Text>
@@ -256,8 +260,12 @@ export const AddSpotScreen: React.FC = () => {
               <TouchableOpacity
                 style={[styles.photoButton, styles.photoButtonOutline]}
                 onPress={async () => {
-                  const uri = await pickImage();
-                  if (uri) setPhotoUri(uri);
+                  try {
+                    const uri = await pickImage();
+                    if (uri) setPhotoUri(uri);
+                  } catch {
+                    Alert.alert('Erreur', 'Impossible d\'ouvrir la galerie.');
+                  }
                 }}
               >
                 <Text style={[styles.photoButtonText, { color: Colors.text }]}>

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   Linking,
+  Alert,
   ScrollView,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -73,7 +74,9 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
     });
     try {
       if (url) Linking.openURL(url);
-    } catch {}
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'ouvrir la navigation.');
+    }
   };
 
   return (

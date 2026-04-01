@@ -8,10 +8,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
 import { FontSizes } from '../constants/typography';
 import { ALL_SPORTS } from '../constants/sports';
@@ -23,7 +19,6 @@ interface FilterBarProps {
   onAccessChange: (acces: 'tous' | 'gratuit' | 'payant') => void;
 }
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,

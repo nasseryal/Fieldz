@@ -48,6 +48,7 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
             source={{ uri: photo }}
             style={styles.photo}
             resizeMode="cover"
+            defaultSource={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88P/BfwAJhAPk3KEbdwAAAABJRU5ErkJggg==' }}
           />
         ))}
       </ScrollView>
