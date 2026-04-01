@@ -14,8 +14,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fieldz.app",
+      "usesAppleSignIn": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyDybd452meZvMUHG1hQPmi1I3RFMb8SpOI"
+        "googleMapsApiKey": "GOOGLE_MAPS_KEY"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Fieldz utilise ta position pour trouver les terrains de sport près de toi.",
@@ -33,7 +34,7 @@
       "package": "com.fieldz.app",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyDybd452meZvMUHG1hQPmi1I3RFMb8SpOI"
+          "apiKey": "GOOGLE_MAPS_KEY"
         }
       },
       "permissions": [
@@ -48,7 +49,8 @@
     "plugins": [
       "expo-font",
       "expo-location",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-apple-authentication"
     ]
   }
 }

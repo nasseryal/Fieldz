@@ -3,14 +3,8 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, writeBatch, doc, Timestamp } from 'firebase/firestore';
 
-const app = initializeApp({
-  apiKey: 'AIzaSyCAKkuuy-3uVKlyOf9B7lByUNbayNoMzFc',
-  authDomain: 'fieldz-ac541.firebaseapp.com',
-  projectId: 'fieldz-ac541',
-  storageBucket: 'fieldz-ac541.firebasestorage.app',
-  messagingSenderId: '87464748014',
-  appId: '1:87464748014:web:b4fb5c7555d69876d964ff',
-});
+import { firebaseConfig } from './firebase-config.mjs';
+const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 const API_BASE = 'https://equipements.sports.gouv.fr/api/explore/v2.1/catalog/datasets/data-es/records';
