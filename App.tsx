@@ -24,6 +24,7 @@ import {
 } from '@expo-google-fonts/dm-sans';
 
 import { Colors } from './src/constants/colors';
+import { TAB_BAR_HEIGHT, TAB_BAR_PADDING_BOTTOM, TAB_BAR_PADDING_TOP } from './src/constants/app';
 import { useAuth } from './src/hooks/useAuth';
 import { Spot } from './src/types';
 
@@ -112,9 +113,9 @@ const TabNavigator = () => {
         tabBarStyle: {
           backgroundColor: Colors.backgroundSecondary,
           borderTopColor: Colors.border,
-          height: 85,
-          paddingBottom: 25,
-          paddingTop: 10,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: TAB_BAR_PADDING_BOTTOM,
+          paddingTop: TAB_BAR_PADDING_TOP,
         },
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.textMuted,

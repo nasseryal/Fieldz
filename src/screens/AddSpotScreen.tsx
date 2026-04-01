@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { ALL_SPORTS } from '../constants/sports';
 import { useLocation } from '../hooks/useLocation';
 import { useAuth } from '../hooks/useAuth';

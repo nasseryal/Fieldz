@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { useAuth } from '../hooks/useAuth';
 import { signOut, deleteAccount } from '../services/auth';
 import { FieldzLogo } from '../components/FieldzLogo';

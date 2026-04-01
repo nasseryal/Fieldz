@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { ALL_SPORTS } from '../constants/sports';
 import { MapFilters } from '../types';
 

@@ -71,7 +71,9 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
       ios: `maps://app?daddr=${spot.latitude},${spot.longitude}`,
       android: `google.navigation:q=${spot.latitude},${spot.longitude}`,
     });
-    if (url) Linking.openURL(url);
+    try {
+      if (url) Linking.openURL(url);
+    } catch {}
   };
 
   return (

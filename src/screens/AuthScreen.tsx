@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { FieldzLogo } from '../components/FieldzLogo';
 import { signInWithEmail, signUpWithEmail, resetPassword, signInWithApple } from '../services/auth';
 

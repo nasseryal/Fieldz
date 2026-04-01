@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { getSportById } from '../constants/sports';
 import { Spot, Coords } from '../types';
 import { FieldzLogo } from '../components/FieldzLogo';

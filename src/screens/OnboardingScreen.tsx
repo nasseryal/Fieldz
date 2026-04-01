@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { Fonts, FontSizes } from '../constants/typography';
+import { FontSizes } from '../constants/typography';
 import { FieldzLogo } from '../components/FieldzLogo';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

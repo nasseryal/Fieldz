@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
-import { Fonts, FontSizes } from '../../constants/typography';
+import { FontSizes } from '../../constants/typography';
 import { Spot } from '../../types';
 import { PhotoCarousel } from '../../components/PhotoCarousel';
 import { AccessBadge } from '../../components/AccessBadge';
@@ -17,7 +17,9 @@ const VolleyScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
       ios: `maps://app?daddr=${spot.latitude},${spot.longitude}`,
       android: `google.navigation:q=${spot.latitude},${spot.longitude}`,
     });
-    if (url) Linking.openURL(url);
+    try {
+      if (url) Linking.openURL(url);
+    } catch {}
   };
 
   return (
@@ -68,9 +70,13 @@ const VolleyScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
             <Text style={styles.actionButtonText}>🧭 Y aller</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionButton, styles.actionButtonOutline]} onPress={async () => {
-              const { pickImage } = await import('../../services/storage');
-              const uri = await pickImage();
-              if (uri) Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+              try {
+                const { pickImage } = await import('../../services/storage');
+                const uri = await pickImage();
+                if (uri) Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+              } catch {
+                Alert.alert('Erreur', 'Impossible d\'ajouter la photo.');
+              }
             }} activeOpacity={0.8}>
             <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>📸 Ajouter une photo</Text>
           </TouchableOpacity>
@@ -81,9 +87,13 @@ const VolleyScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
                 [
                   { text: 'Annuler', style: 'cancel' },
                   { text: 'Signaler', style: 'destructive', onPress: async () => {
-                    const { reportSpot } = await import('../../services/spots');
-                    await reportSpot(spot.id);
-                    Alert.alert('Merci', 'Ton signalement a été pris en compte.');
+                    try {
+                      const { reportSpot } = await import('../../services/spots');
+                      await reportSpot(spot.id);
+                      Alert.alert('Merci', 'Ton signalement a été pris en compte.');
+                    } catch {
+                      Alert.alert('Erreur', 'Impossible d\'envoyer le signalement.');
+                    }
                   }},
                 ]
               );

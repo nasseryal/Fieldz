@@ -3,9 +3,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import * as ImagePicker from 'expo-image-picker';
 
-const MAX_IMAGE_WIDTH = 1920;
-const MAX_IMAGE_HEIGHT = 1440;
 const IMAGE_QUALITY = 0.7;
+const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo max
 
 // Compresse et upload une photo de spot
 export const uploadSpotPhoto = async (
@@ -14,6 +13,11 @@ export const uploadSpotPhoto = async (
 ): Promise<string> => {
   const response = await fetch(uri);
   const blob = await response.blob();
+
+  // Vérifie que la photo ne dépasse pas 5 Mo
+  if (blob.size > MAX_UPLOAD_SIZE_BYTES) {
+    throw new Error('Photo trop lourde (5 Mo maximum)');
+  }
 
   const filename = `spots/${spotId}/${Date.now()}.jpg`;
   const storageRef = ref(storage, filename);
