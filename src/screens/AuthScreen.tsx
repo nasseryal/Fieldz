@@ -15,7 +15,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
 import { Fonts, FontSizes } from '../constants/typography';
 import { FieldzLogo } from '../components/FieldzLogo';
-import { signInWithEmail, signUpWithEmail, resetPassword } from '../services/auth';
+import { signInWithEmail, signUpWithEmail, resetPassword, signInWithApple } from '../services/auth';
 
 export const AuthScreen: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -99,7 +99,19 @@ export const AuthScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.appleButton}
             activeOpacity={0.8}
-            onPress={() => Alert.alert('Bientôt', 'Sign in with Apple sera disponible dans le build final')}
+            onPress={async () => {
+              try {
+                setLoading(true);
+                await signInWithApple();
+              } catch (error: any) {
+                // Code 1001 = l'utilisateur a annulé, pas une vraie erreur
+                if (error.code !== 'ERR_REQUEST_CANCELED') {
+                  Alert.alert('Erreur', 'Connexion Apple impossible');
+                }
+              } finally {
+                setLoading(false);
+              }
+            }}
           >
             <Text style={styles.appleButtonText}> Continuer avec Apple</Text>
           </TouchableOpacity>

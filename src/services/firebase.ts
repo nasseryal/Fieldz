@@ -1,8 +1,10 @@
 // Initialisation Firebase — le "moteur" qui connecte l'app à la base de données
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+// @ts-ignore — getReactNativePersistence existe au runtime dans le build EAS
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // On récupère les clés depuis le fichier .env
 const firebaseConfig = {
@@ -17,9 +19,19 @@ const firebaseConfig = {
 // Initialise Firebase une seule fois
 const app = initializeApp(firebaseConfig);
 
-// Les 3 services qu'on utilise partout :
-export const auth = getAuth(app);           // Connexion utilisateur
-export const db = getFirestore(app);         // Base de données
-export const storage = getStorage(app);      // Stockage photos
+// Auth avec persistance — essaie avec AsyncStorage, fallback sur getAuth si ça échoue
+let auth: ReturnType<typeof getAuth>;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch {
+  // Fallback si initializeAuth échoue (ex: déjà initialisé en hot reload)
+  auth = getAuth(app);
+}
+
+export { auth };
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
