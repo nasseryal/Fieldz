@@ -3,16 +3,12 @@ import {
   collection,
   doc,
   addDoc,
-  getDoc,
   getDocs,
   updateDoc,
   query,
   where,
-  orderBy,
   limit,
   Timestamp,
-  arrayUnion,
-  arrayRemove,
   increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -28,7 +24,6 @@ export const getSpotsBySportNearby = async (
 ): Promise<Spot[]> => {
   const deps = getNearbyDepartments(coords.latitude, coords.longitude);
 
-  // Lance toutes les requêtes en parallèle (8 en même temps au lieu d'une par une)
   const promises = deps.map(dep => {
     const minCP = dep.length === 2 ? dep + '000' : dep + '00';
     const maxCP = dep.length === 2 ? dep + '999' : dep + '99';
@@ -44,50 +39,76 @@ export const getSpotsBySportNearby = async (
   });
 
   const snapshots = await Promise.all(promises);
-  const allSpots = snapshots.flatMap(snap =>
+  return snapshots.flatMap(snap =>
     snap.docs.map(d => ({ id: d.id, ...d.data() } as Spot))
   );
-
-  return allSpots;
 };
 
-// Récupère les spots proches en cherchant par code postal (département)
-export const getAllSpots = async (coords?: Coords): Promise<Spot[]> => {
-  try {
-    // Trouve les départements proches des coordonnées GPS
-    const deps = coords
-      ? getNearbyDepartments(coords.latitude, coords.longitude)
-      : ['75', '92', '93', '94']; // Paris par défaut
+// Ajoute un nouveau spot + incrémente le compteur de l'utilisateur
+export const addSpot = async (
+  spot: Omit<Spot, 'id' | 'createdAt' | 'updatedAt' | 'signalements' | 'valide'>
+): Promise<string> => {
+  const docRef = await addDoc(collection(db, SPOTS_COLLECTION), {
+    ...spot,
+    valide: true,
+    signalements: 0,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
 
-    const allSpots: Spot[] = [];
-
-    // Requête par département (via le code postal)
-    for (const dep of deps) {
-      const minCP = dep.length === 2 ? dep + '000' : dep + '00';
-      const maxCP = dep.length === 2 ? dep + '999' : dep + '99';
-
-      const q = query(
-        collection(db, SPOTS_COLLECTION),
-        where('codePostal', '>=', minCP),
-        where('codePostal', '<=', maxCP),
-        limit(FIRESTORE_SPOTS_LIMIT)
-      );
-      const snapshot = await getDocs(q);
-      const spots = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Spot));
-      allSpots.push(...spots);
-    }
-
-    return allSpots;
-  } catch (error) {
-    // Propage l'erreur au hook pour afficher un message à l'utilisateur
-    throw error;
+  // Incrémente le compteur spotsAjoutes du profil utilisateur
+  if (spot.ajoutePar) {
+    const userRef = doc(db, 'users', spot.ajoutePar);
+    await updateDoc(userRef, { spotsAjoutes: increment(1) });
   }
+
+  return docRef.id;
 };
+
+// Signale un spot
+export const reportSpot = async (spotId: string) => {
+  const docRef = doc(db, SPOTS_COLLECTION, spotId);
+  await updateDoc(docRef, {
+    signalements: increment(1),
+    updatedAt: Timestamp.now(),
+  });
+};
+
+// Filtre les spots par distance (côté client)
+export const filterSpotsByDistance = (
+  spots: Spot[],
+  center: Coords,
+  radiusKm: number
+): Spot[] => {
+  return spots.filter(spot => {
+    const distance = getDistanceKm(
+      center.latitude, center.longitude,
+      spot.latitude, spot.longitude
+    );
+    return distance <= radiusKm;
+  });
+};
+
+// Calcule la distance entre 2 points GPS (formule de Haversine)
+export const getDistanceKm = (
+  lat1: number, lon1: number,
+  lat2: number, lon2: number
+): number => {
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const toRad = (deg: number) => deg * (Math.PI / 180);
 
 // Trouve les départements proches d'une position GPS
-// Mapping simplifié : on utilise les bornes géographiques des départements
 const getNearbyDepartments = (lat: number, lon: number): string[] => {
-  // Liste de tous les départements avec leurs centres approximatifs
   const DEPT_CENTERS: [string, number, number][] = [
     ['01',46.2,5.6],['02',49.5,3.6],['03',46.4,3.2],['04',44.1,6.2],['05',44.6,6.3],
     ['06',43.9,7.2],['07',44.7,4.6],['08',49.6,4.6],['09',42.9,1.5],['10',48.3,4.1],
@@ -112,7 +133,6 @@ const getNearbyDepartments = (lat: number, lon: number): string[] => {
     ['974',-21.1,55.5],['976',-12.8,45.2],
   ];
 
-  // Calcule la distance à chaque département et prend les 8 plus proches
   const withDist = DEPT_CENTERS.map(([code, dLat, dLon]) => ({
     code,
     dist: Math.sqrt(Math.pow(lat - dLat, 2) + Math.pow(lon - dLon, 2)),
@@ -121,85 +141,3 @@ const getNearbyDepartments = (lat: number, lon: number): string[] => {
   withDist.sort((a, b) => a.dist - b.dist);
   return withDist.slice(0, NEARBY_DEPARTMENTS_COUNT).map(d => d.code);
 };
-
-// Récupère un spot par son ID
-export const getSpotById = async (spotId: string): Promise<Spot | null> => {
-  const docRef = doc(db, SPOTS_COLLECTION, spotId);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  return { id: docSnap.id, ...docSnap.data() } as Spot;
-};
-
-// Ajoute un nouveau spot (ajouté par un utilisateur)
-export const addSpot = async (spot: Omit<Spot, 'id' | 'createdAt' | 'updatedAt' | 'signalements' | 'valide'>): Promise<string> => {
-  const docRef = await addDoc(collection(db, SPOTS_COLLECTION), {
-    ...spot,
-    valide: true, // On valide automatiquement pour l'instant
-    signalements: 0,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  });
-  return docRef.id;
-};
-
-// Signale un spot (erreur, fermé, etc.)
-export const reportSpot = async (spotId: string) => {
-  const docRef = doc(db, SPOTS_COLLECTION, spotId);
-  await updateDoc(docRef, {
-    signalements: increment(1),
-    updatedAt: Timestamp.now(),
-  });
-};
-
-// Ajoute/retire un spot des favoris d'un utilisateur
-export const toggleFavorite = async (userId: string, spotId: string, isFavorite: boolean) => {
-  const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, {
-    favoris: isFavorite ? arrayRemove(spotId) : arrayUnion(spotId),
-  });
-};
-
-// Récupère les favoris d'un utilisateur
-export const getUserFavorites = async (userId: string): Promise<string[]> => {
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return [];
-  return userSnap.data().favoris ?? [];
-};
-
-// Filtre les spots par distance (côté client — simple mais efficace)
-export const filterSpotsByDistance = (
-  spots: Spot[],
-  center: Coords,
-  radiusKm: number
-): Spot[] => {
-  return spots.filter(spot => {
-    const distance = getDistanceKm(
-      center.latitude,
-      center.longitude,
-      spot.latitude,
-      spot.longitude
-    );
-    return distance <= radiusKm;
-  });
-};
-
-// Calcule la distance entre 2 points GPS (formule de Haversine)
-export const getDistanceKm = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Rayon de la Terre en km
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-const toRad = (deg: number) => deg * (Math.PI / 180);

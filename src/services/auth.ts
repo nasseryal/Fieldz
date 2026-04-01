@@ -4,7 +4,6 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
-  sendEmailVerification,
   deleteUser as firebaseDeleteUser,
   updateProfile,
   OAuthProvider,
@@ -70,12 +69,6 @@ export const resetPassword = async (email: string) => {
   await sendPasswordResetEmail(auth, email);
 };
 
-// Envoie un email de vérification
-export const verifyEmail = async () => {
-  if (auth.currentUser) {
-    await sendEmailVerification(auth.currentUser);
-  }
-};
 
 // Déconnexion
 export const signOut = async () => {
@@ -119,12 +112,11 @@ export const deleteAccount = async () => {
     await batch.commit();
   }
 
-  // 2. Supprime les photos uploadées par l'utilisateur dans Storage
+  // 2. Supprime les photos des spots de l'utilisateur dans Storage
   try {
-    const storageRef = ref(storage, `spots/`);
-    const list = await listAll(storageRef);
-    for (const folderRef of list.prefixes) {
-      const files = await listAll(folderRef);
+    for (const d of docs) {
+      const spotPhotosRef = ref(storage, `spots/${d.id}/`);
+      const files = await listAll(spotPhotosRef);
       for (const fileRef of files.items) {
         await deleteObject(fileRef);
       }

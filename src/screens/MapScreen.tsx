@@ -26,10 +26,13 @@ import { getDistanceKm } from '../services/spots';
 // API gratuite pour convertir une adresse en coordonnées GPS
 const geocodeAddress = async (text: string): Promise<Coords | null> => {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)},France&limit=1`,
-      { headers: { 'User-Agent': 'Fieldz-App' } }
+      { headers: { 'User-Agent': 'Fieldz-App' }, signal: controller.signal }
     );
+    clearTimeout(timeout);
     const data = await response.json();
     if (data.length > 0) {
       return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };

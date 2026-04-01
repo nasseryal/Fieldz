@@ -22,7 +22,7 @@ const PetanqueScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
     });
     try {
       if (url) Linking.openURL(url);
-    } catch {}
+    } catch { Alert.alert('Erreur', 'Navigation indisponible'); }
   };
 
   return (

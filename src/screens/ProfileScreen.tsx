@@ -31,7 +31,13 @@ export const ProfileScreen: React.FC = () => {
       'Tu veux vraiment te déconnecter ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Oui', style: 'destructive', onPress: () => signOut() },
+        { text: 'Oui', style: 'destructive', onPress: async () => {
+          try {
+            await signOut();
+          } catch {
+            Alert.alert('Erreur', 'Impossible de se déconnecter.');
+          }
+        }},
       ]
     );
   };
@@ -66,7 +72,11 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleContact = () => {
-    Linking.openURL('mailto:fieldz.app.contact@gmail.com');
+    try {
+      Linking.openURL('mailto:fieldz.app.contact@gmail.com');
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'ouvrir le mail.');
+    }
   };
 
   return (
@@ -108,11 +118,6 @@ export const ProfileScreen: React.FC = () => {
             </Text>
             <Text style={styles.statLabel}>Sports explorés</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{profile?.favoris?.length ?? 0}</Text>
-            <Text style={styles.statLabel}>Favoris</Text>
-          </View>
         </Animated.View>
 
         {/* Menu */}
@@ -121,6 +126,17 @@ export const ProfileScreen: React.FC = () => {
             emoji="📧"
             label="Nous contacter"
             onPress={handleContact}
+          />
+          <MenuItem
+            emoji="🔒"
+            label="Politique de confidentialité"
+            onPress={() => {
+              try {
+                Linking.openURL('https://github.com/nasseryal/Fieldz/blob/master/PRIVACY.md');
+              } catch {
+                Alert.alert('Erreur', 'Impossible d\'ouvrir le lien.');
+              }
+            }}
           />
         </Animated.View>
 

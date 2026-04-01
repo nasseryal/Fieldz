@@ -29,11 +29,15 @@ export const AddSpotScreen: React.FC = () => {
   const [step, setStep] = useState(1); // 1, 2 ou 3
   const [loading, setLoading] = useState(false);
 
-  // Données du formulaire
+  // Données du formulaire — se met à jour quand le GPS change
   const [location, setLocation] = useState({
     latitude: coords.latitude,
     longitude: coords.longitude,
   });
+
+  React.useEffect(() => {
+    setLocation({ latitude: coords.latitude, longitude: coords.longitude });
+  }, [coords.latitude, coords.longitude]);
   const [sportId, setSportId] = useState('');
   const [nom, setNom] = useState('');
   const [acces, setAcces] = useState<'gratuit' | 'payant' | 'mixte'>('gratuit');
@@ -59,18 +63,41 @@ export const AddSpotScreen: React.FC = () => {
 
   // Soumettre le spot
   const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert('Erreur', 'Tu dois être connecté pour ajouter un spot.');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // Crée le spot d'abord pour obtenir l'ID réel
+      // Reverse geocoding pour remplir adresse/ville/codePostal automatiquement
+      let spotVille = '';
+      let spotAdresse = '';
+      let spotCodePostal = '';
+      try {
+        const geoResp = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+          { headers: { 'User-Agent': 'Fieldz-App' } }
+        );
+        const geoData = await geoResp.json();
+        if (geoData.address) {
+          spotVille = geoData.address.city || geoData.address.town || geoData.address.village || '';
+          spotAdresse = geoData.address.road || '';
+          spotCodePostal = geoData.address.postcode || '';
+        }
+      } catch {
+        // Pas grave si le reverse geocoding échoue
+      }
+
       const spotId = await addSpot({
         nom,
         sport: sportId,
         latitude: location.latitude,
         longitude: location.longitude,
-        adresse: '',
-        ville: '',
-        codePostal: '',
+        adresse: spotAdresse,
+        ville: spotVille,
+        codePostal: spotCodePostal,
         acces,
         prixEstime: acces === 'payant' ? prix : undefined,
         equipements: [],
@@ -79,9 +106,13 @@ export const AddSpotScreen: React.FC = () => {
         ajoutePar: user?.uid,
       });
 
-      // Upload la photo avec l'ID réel du spot
+      // Upload la photo et lie l'URL au spot
       if (photoUri) {
-        await uploadSpotPhoto(photoUri, spotId);
+        const photoUrl = await uploadSpotPhoto(photoUri, spotId);
+        // Met à jour le spot avec l'URL de la photo
+        const { doc, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('../services/firebase');
+        await updateDoc(doc(db, 'spots', spotId), { photos: [photoUrl] });
       }
 
       Alert.alert('Bravo ! 🎉', 'Ton spot a été ajouté avec succès');

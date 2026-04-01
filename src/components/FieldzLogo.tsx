@@ -1,12 +1,11 @@
 // Logo Fieldz — "Field" en blanc + "z" qui change de couleur selon le sport actif
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { FontSizes } from '../constants/typography';
 import { Colors } from '../constants/colors';
 
 interface FieldzLogoProps {
-  color?: string; // Couleur du "z" — change selon le sport sélectionné
+  color?: string;
   size?: 'small' | 'medium' | 'large';
 }
 
@@ -22,17 +21,11 @@ export const FieldzLogo: React.FC<FieldzLogoProps> = ({
 }) => {
   const { fontSize } = SIZES[size];
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    color: withSpring(color as any), // Animation de changement de couleur
-  }));
-
   return (
     <View style={styles.container}>
       <Text style={[styles.mapPin, { fontSize: fontSize * 0.6, color }]}>📍</Text>
       <Text style={[styles.field, { fontSize }]}>Field</Text>
-      <Animated.Text style={[styles.z, { fontSize }, animatedStyle]}>
-        z
-      </Animated.Text>
+      <Text style={[styles.z, { fontSize, color }]}>z</Text>
     </View>
   );
 };

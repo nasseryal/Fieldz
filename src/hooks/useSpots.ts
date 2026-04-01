@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Spot, MapFilters, Coords } from '../types';
 import { getSpotsBySportNearby, filterSpotsByDistance } from '../services/spots';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db, auth } from '../services/firebase';
 import { DEFAULT_RADIUS_KM, DEDUP_DISTANCE_THRESHOLD } from '../constants/app';
 
 export const useSpots = (coords: Coords) => {
@@ -15,28 +17,13 @@ export const useSpots = (coords: Coords) => {
     acces: 'tous',
   });
 
-  // Cache : garde les spots déjà chargés par sport (pas besoin de re-requêter)
   const cache = useRef<Record<string, Spot[]>>({});
+  const lastCoords = useRef({ lat: 0, lon: 0 });
+  const coordsRef = useRef(coords);
+  coordsRef.current = coords;
 
-  // Quand le sport ou les coordonnées changent → on charge les spots
-  useEffect(() => {
-    if (filters.sport) {
-      // Vide le cache si les coordonnées ont changé
-      cache.current = {};
-      loadSportSpots(filters.sport);
-    } else {
-      setSpots([]);
-      setFilteredSpots([]);
-    }
-  }, [filters.sport, coords.latitude, coords.longitude]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [spots, filters.acces, distanceKm]);
-
-  // Charge les spots — utilise le cache si déjà chargé
-  const loadSportSpots = async (sportId: string) => {
-    // Si déjà en cache → affichage instantané
+  // Charge les spots d'un sport
+  const loadSportSpots = useCallback(async (sportId: string) => {
     if (cache.current[sportId]) {
       setSpots(cache.current[sportId]);
       return;
@@ -45,19 +32,46 @@ export const useSpots = (coords: Coords) => {
     try {
       setLoading(true);
       setError(null);
-      const sportSpots = await getSpotsBySportNearby(sportId, coords);
+      const sportSpots = await getSpotsBySportNearby(sportId, coordsRef.current);
       cache.current[sportId] = sportSpots;
       setSpots(sportSpots);
+      // Met à jour sportsExplores dans le profil
+      if (auth.currentUser) {
+        try {
+          await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+            sportsExplores: arrayUnion(sportId),
+          });
+        } catch { /* pas grave si ça échoue */ }
+      }
     } catch {
       setError('Impossible de charger les spots. Vérifie ta connexion.');
       setSpots([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Applique les filtres accès + distance
-  const applyFilters = useCallback(() => {
+  // Quand le sport ou les coordonnées changent
+  useEffect(() => {
+    const movedSignificantly =
+      Math.abs(coords.latitude - lastCoords.current.lat) > 0.01 ||
+      Math.abs(coords.longitude - lastCoords.current.lon) > 0.01;
+
+    if (movedSignificantly) {
+      cache.current = {};
+      lastCoords.current = { lat: coords.latitude, lon: coords.longitude };
+    }
+
+    if (filters.sport) {
+      loadSportSpots(filters.sport);
+    } else {
+      setSpots([]);
+      setFilteredSpots([]);
+    }
+  }, [filters.sport, coords.latitude, coords.longitude, loadSportSpots]);
+
+  // Applique les filtres accès + distance + tri + dédup
+  useEffect(() => {
     let result = [...spots];
 
     if (filters.acces !== 'tous') {
@@ -66,14 +80,12 @@ export const useSpots = (coords: Coords) => {
 
     result = filterSpotsByDistance(result, coords, distanceKm);
 
-    // Trie du plus proche au plus loin
     result.sort((a, b) => {
       const distA = Math.pow(a.latitude - coords.latitude, 2) + Math.pow(a.longitude - coords.longitude, 2);
       const distB = Math.pow(b.latitude - coords.latitude, 2) + Math.pow(b.longitude - coords.longitude, 2);
       return distA - distB;
     });
 
-    // Anti-doublons : retire les spots à moins de 30m l'un de l'autre
     const unique: typeof result = [];
     for (const spot of result) {
       const isDuplicate = unique.some(
@@ -82,9 +94,8 @@ export const useSpots = (coords: Coords) => {
       );
       if (!isDuplicate) unique.push(spot);
     }
-    result = unique;
 
-    setFilteredSpots(result);
+    setFilteredSpots(unique);
   }, [spots, filters.acces, coords, distanceKm]);
 
   const setSportFilter = (sportId: string | null) => {
