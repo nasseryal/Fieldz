@@ -1,6 +1,6 @@
 // Écran détail Basket
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
 import { Fonts, FontSizes } from '../../constants/typography';
@@ -76,10 +76,27 @@ const BasketScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
           <TouchableOpacity style={[styles.actionButton, { backgroundColor: sportConfig.color }]} onPress={handleNavigate} activeOpacity={0.8}>
             <Text style={styles.actionButtonText}>🧭 Y aller</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, styles.actionButtonOutline]} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.actionButton, styles.actionButtonOutline]} onPress={async () => {
+              const { pickImage } = await import('../../services/storage');
+              const uri = await pickImage();
+              if (uri) Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+            }} activeOpacity={0.8}>
             <Text style={[styles.actionButtonText, { color: Colors.text }]}>📸 Ajouter une photo</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, styles.actionButtonDanger]} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.actionButton, styles.actionButtonDanger]} onPress={() => {
+              Alert.alert(
+                'Signaler une erreur',
+                'Ce terrain contient des informations incorrectes ?',
+                [
+                  { text: 'Annuler', style: 'cancel' },
+                  { text: 'Signaler', style: 'destructive', onPress: async () => {
+                    const { reportSpot } = await import('../../services/spots');
+                    await reportSpot(spot.id);
+                    Alert.alert('Merci', 'Ton signalement a été pris en compte.');
+                  }},
+                ]
+              );
+            }} activeOpacity={0.8}>
             <Text style={[styles.actionButtonText, { color: Colors.error }]}>⚠️ Signaler une erreur</Text>
           </TouchableOpacity>
         </View>

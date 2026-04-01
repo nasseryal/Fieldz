@@ -3,30 +3,29 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import * as ImagePicker from 'expo-image-picker';
 
+const MAX_IMAGE_WIDTH = 1920;
+const MAX_IMAGE_HEIGHT = 1440;
+const IMAGE_QUALITY = 0.7;
+
 // Compresse et upload une photo de spot
 export const uploadSpotPhoto = async (
   uri: string,
   spotId: string
 ): Promise<string> => {
-  // Convertit l'image en blob (format envoyable)
   const response = await fetch(uri);
   const blob = await response.blob();
 
-  // Crée un nom unique pour la photo
   const filename = `spots/${spotId}/${Date.now()}.jpg`;
   const storageRef = ref(storage, filename);
 
-  // Upload vers Firebase Storage
   await uploadBytes(storageRef, blob);
 
-  // Retourne l'URL publique de la photo
   const downloadURL = await getDownloadURL(storageRef);
   return downloadURL;
 };
 
 // Ouvre la galerie pour choisir une photo
 export const pickImage = async (): Promise<string | null> => {
-  // Demande la permission d'accéder à la galerie
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return null;
 
@@ -34,7 +33,8 @@ export const pickImage = async (): Promise<string | null> => {
     mediaTypes: ['images'],
     allowsEditing: true,
     aspect: [4, 3],
-    quality: 0.7, // Compression à 70% — bon compromis qualité/poids
+    quality: IMAGE_QUALITY,
+    exif: false,
   });
 
   if (result.canceled) return null;
@@ -49,7 +49,8 @@ export const takePhoto = async (): Promise<string | null> => {
   const result = await ImagePicker.launchCameraAsync({
     allowsEditing: true,
     aspect: [4, 3],
-    quality: 0.7,
+    quality: IMAGE_QUALITY,
+    exif: false,
   });
 
   if (result.canceled) return null;

@@ -49,8 +49,8 @@ export const AddSpotScreen: React.FC = () => {
         Alert.alert('Oups', 'Choisis un sport');
         return;
       }
-      if (!nom) {
-        Alert.alert('Oups', 'Donne un nom au spot');
+      if (!nom || nom.length < 3) {
+        Alert.alert('Oups', 'Donne un nom au spot (3 caractères minimum)');
         return;
       }
       setStep(3);
@@ -92,7 +92,7 @@ export const AddSpotScreen: React.FC = () => {
       setPhotoUri(null);
     } catch (error) {
       Alert.alert('Erreur', "Impossible d'ajouter le spot");
-      console.error(error);
+      // Erreur gérée par l'Alert au-dessus
     } finally {
       setLoading(false);
     }
@@ -184,6 +184,7 @@ export const AddSpotScreen: React.FC = () => {
               placeholderTextColor={Colors.textMuted}
               value={nom}
               onChangeText={setNom}
+              maxLength={100}
             />
 
             {/* Accès */}

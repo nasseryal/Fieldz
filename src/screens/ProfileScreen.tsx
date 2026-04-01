@@ -1,5 +1,5 @@
-// Écran Profil — infos utilisateur, stats, favoris, déconnexion
-import React, { useState } from 'react';
+// Écran Profil — infos utilisateur, stats, déconnexion, suppression compte
+import React from 'react';
 import {
   View,
   Text,
@@ -8,54 +8,22 @@ import {
   StyleSheet,
   Alert,
   Image,
-  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
 import { Fonts, FontSizes } from '../constants/typography';
 import { useAuth } from '../hooks/useAuth';
-import { signOut } from '../services/auth';
+import { signOut, deleteAccount } from '../services/auth';
 import { FieldzLogo } from '../components/FieldzLogo';
-import { importAllSports } from '../services/sportsData';
+
+// Email admin pour cacher la section import
+const ADMIN_EMAIL = 'nasseryal@gmail.com';
 
 export const ProfileScreen: React.FC = () => {
   const { user, profile } = useAuth();
-  const [importing, setImporting] = useState(false);
-  const [importLog, setImportLog] = useState<string[]>([]);
-
-  // Import massif des spots depuis l'API gouvernementale
-  const handleImportSpots = () => {
-    Alert.alert(
-      'Importer les spots',
-      'On va récupérer ~100 terrains par sport depuis la base gouvernementale. Ça peut prendre 1-2 minutes.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Importer',
-          onPress: async () => {
-            setImporting(true);
-            setImportLog([]);
-            try {
-              const total = await importAllSports((sport, count) => {
-                const msg = count === -1
-                  ? `❌ ${sport} — erreur`
-                  : count === 0
-                  ? `⏭️ ${sport} — aucun résultat`
-                  : `✅ ${sport} — ${count} spots importés`;
-                setImportLog(prev => [...prev, msg]);
-              });
-              Alert.alert('Import terminé ! 🎉', `${total} spots importés au total`);
-            } catch (error) {
-              Alert.alert('Erreur', "L'import a échoué");
-            } finally {
-              setImporting(false);
-            }
-          },
-        },
-      ]
-    );
-  };
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleSignOut = () => {
     Alert.alert(
@@ -66,6 +34,39 @@ export const ProfileScreen: React.FC = () => {
         { text: 'Oui', style: 'destructive', onPress: () => signOut() },
       ]
     );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Supprimer mon compte',
+      'Cette action est irréversible. Toutes tes données seront supprimées.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              Alert.alert('Compte supprimé', 'Ton compte a été supprimé avec succès.');
+            } catch (error: any) {
+              if (error.code === 'auth/requires-recent-login') {
+                Alert.alert(
+                  'Reconnexion nécessaire',
+                  'Pour des raisons de sécurité, déconnecte-toi et reconnecte-toi avant de supprimer ton compte.'
+                );
+              } else {
+                Alert.alert('Erreur', 'Impossible de supprimer le compte.');
+              }
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleContact = () => {
+    Linking.openURL('mailto:fieldz.app.contact@gmail.com');
   };
 
   return (
@@ -117,64 +118,31 @@ export const ProfileScreen: React.FC = () => {
         {/* Menu */}
         <Animated.View entering={FadeInDown.delay(300)} style={styles.menu}>
           <MenuItem
-            emoji="⭐"
-            label="Mes favoris"
-            onPress={() => {}}
-          />
-          <MenuItem
-            emoji="📍"
-            label="Mes contributions"
-            onPress={() => {}}
-          />
-          <MenuItem
-            emoji="⚙️"
-            label="Paramètres"
-            onPress={() => {}}
-          />
-          <MenuItem
             emoji="📧"
             label="Nous contacter"
-            onPress={() => {}}
+            onPress={handleContact}
           />
-        </Animated.View>
-
-        {/* Section Admin — Import des spots */}
-        <Animated.View entering={FadeInDown.delay(400)} style={styles.adminSection}>
-          <Text style={styles.adminTitle}>🔧 Admin</Text>
-
-          <TouchableOpacity
-            style={[styles.importButton, importing && styles.buttonDisabled]}
-            onPress={handleImportSpots}
-            activeOpacity={0.7}
-            disabled={importing}
-          >
-            {importing ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.importButtonText}>
-                📥 Importer les spots (API gouvernementale)
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Log d'import en temps réel */}
-          {importLog.length > 0 && (
-            <View style={styles.importLog}>
-              {importLog.map((line, i) => (
-                <Text key={i} style={styles.importLogLine}>{line}</Text>
-              ))}
-            </View>
-          )}
         </Animated.View>
 
         {/* Déconnexion */}
-        <Animated.View entering={FadeInDown.delay(500)}>
+        <Animated.View entering={FadeInDown.delay(400)}>
           <TouchableOpacity
             style={styles.signOutButton}
             onPress={handleSignOut}
             activeOpacity={0.7}
           >
-            <Text style={styles.signOutText}>🚪 Se déconnecter</Text>
+            <Text style={styles.signOutText}>Se déconnecter</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Supprimer mon compte (obligation Apple) */}
+        <Animated.View entering={FadeInDown.delay(500)}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDeleteAccount}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.deleteText}>Supprimer mon compte</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -310,52 +278,30 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: Colors.textMuted,
   },
-  adminSection: {
-    marginHorizontal: 20,
-    marginTop: 24,
-  },
-  adminTitle: {
-    fontFamily: 'BarlowCondensed_600SemiBold',
-    fontSize: FontSizes.lg,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-  },
-  importButton: {
-    backgroundColor: Colors.accent,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  importButtonText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: FontSizes.md,
-    color: '#FFFFFF',
-  },
-  importLog: {
-    marginTop: 12,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 12,
-    padding: 12,
-    gap: 4,
-  },
-  importLogLine: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-  },
   signOutButton: {
     marginHorizontal: 20,
     marginTop: 24,
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.error + '30',
+    borderColor: Colors.border,
     alignItems: 'center',
   },
   signOutText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+  },
+  deleteButton: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.error + '30',
+    alignItems: 'center',
+  },
+  deleteText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: FontSizes.md,
     color: Colors.error,

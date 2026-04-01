@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Linking,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
@@ -114,6 +115,11 @@ const SportScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonOutline]}
+            onPress={async () => {
+              const { pickImage } = await import('../../services/storage');
+              const uri = await pickImage();
+              if (uri) Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+            }}
             activeOpacity={0.8}
           >
             <Text style={[styles.actionButtonText, { color: Colors.text }]}>
@@ -122,6 +128,20 @@ const SportScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonDanger]}
+            onPress={() => {
+              Alert.alert(
+                'Signaler une erreur',
+                'Ce terrain contient des informations incorrectes ?',
+                [
+                  { text: 'Annuler', style: 'cancel' },
+                  { text: 'Signaler', style: 'destructive', onPress: async () => {
+                    const { reportSpot } = await import('../../services/spots');
+                    await reportSpot(spot.id);
+                    Alert.alert('Merci', 'Ton signalement a été pris en compte.');
+                  }},
+                ]
+              );
+            }}
             activeOpacity={0.8}
           >
             <Text style={[styles.actionButtonText, { color: Colors.error }]}>

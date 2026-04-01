@@ -5,12 +5,13 @@ import {
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   sendEmailVerification,
+  deleteUser as firebaseDeleteUser,
   updateProfile,
   OAuthProvider,
   signInWithCredential,
   User,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, getDocs, query, where, collection, writeBatch, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { UserProfile } from '../types';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -97,6 +98,31 @@ export const createUserProfile = async (user: User) => {
   };
 
   await setDoc(userRef, profile);
+};
+
+// Supprime le compte utilisateur et TOUTES ses données (obligation Apple)
+export const deleteAccount = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // 1. Supprime tous les spots créés par l'utilisateur
+  const spotsQuery = query(
+    collection(db, 'spots'),
+    where('ajoutePar', '==', user.uid)
+  );
+  const spotsSnap = await getDocs(spotsQuery);
+  if (spotsSnap.size > 0) {
+    const batch = writeBatch(db);
+    spotsSnap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  // 2. Supprime le profil Firestore
+  const userRef = doc(db, 'users', user.uid);
+  await deleteDoc(userRef);
+
+  // 3. Supprime le compte Firebase Auth
+  await firebaseDeleteUser(user);
 };
 
 // Récupère le profil utilisateur

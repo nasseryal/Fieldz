@@ -2,12 +2,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Spot, MapFilters, Coords } from '../types';
 import { getSpotsBySportNearby, filterSpotsByDistance } from '../services/spots';
+import { DEFAULT_RADIUS_KM, DEDUP_DISTANCE_THRESHOLD } from '../constants/app';
 
 export const useSpots = (coords: Coords) => {
   const [spots, setSpots] = useState<Spot[]>([]);
   const [filteredSpots, setFilteredSpots] = useState<Spot[]>([]);
   const [loading, setLoading] = useState(false);
-  const [distanceKm, setDistanceKm] = useState(10);
+  const [error, setError] = useState<string | null>(null);
+  const [distanceKm, setDistanceKm] = useState(DEFAULT_RADIUS_KM);
   const [filters, setFilters] = useState<MapFilters>({
     sport: null,
     acces: 'tous',
@@ -42,11 +44,13 @@ export const useSpots = (coords: Coords) => {
 
     try {
       setLoading(true);
+      setError(null);
       const sportSpots = await getSpotsBySportNearby(sportId, coords);
-      cache.current[sportId] = sportSpots; // Sauvegarde en cache
+      cache.current[sportId] = sportSpots;
       setSpots(sportSpots);
-    } catch (error) {
-      console.error('Erreur chargement spots:', error);
+    } catch {
+      setError('Impossible de charger les spots. Vérifie ta connexion.');
+      setSpots([]);
     } finally {
       setLoading(false);
     }
@@ -73,8 +77,8 @@ export const useSpots = (coords: Coords) => {
     const unique: typeof result = [];
     for (const spot of result) {
       const isDuplicate = unique.some(
-        s => Math.abs(s.latitude - spot.latitude) < 0.0003 &&
-             Math.abs(s.longitude - spot.longitude) < 0.0003
+        s => Math.abs(s.latitude - spot.latitude) < DEDUP_DISTANCE_THRESHOLD &&
+             Math.abs(s.longitude - spot.longitude) < DEDUP_DISTANCE_THRESHOLD
       );
       if (!isDuplicate) unique.push(spot);
     }
@@ -95,6 +99,7 @@ export const useSpots = (coords: Coords) => {
     spots: filteredSpots,
     allSpots: spots,
     loading,
+    error,
     filters,
     distanceKm,
     setDistanceKm,

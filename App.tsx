@@ -1,8 +1,11 @@
 // App.tsx — Point d'entrée de Fieldz
 // C'est le chef d'orchestre qui gère quelle page afficher
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import * as Sentry from '@sentry/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -169,9 +172,38 @@ const TabNavigator = () => {
   );
 };
 
-export default function App() {
+// Initialise Sentry pour le crash reporting (DSN vide = désactivé en dev)
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN,
+});
+
+function App() {
   const { user, loading: authLoading } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState(false);
+  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  // Détecte si l'utilisateur est hors ligne
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOffline(!state.isConnected);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Vérifie si l'utilisateur a déjà vu l'onboarding
+  useEffect(() => {
+    AsyncStorage.getItem('onboarding_done').then(value => {
+      if (value === 'true') setOnboardingDone(true);
+      setOnboardingLoaded(true);
+    });
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setOnboardingDone(true);
+    AsyncStorage.setItem('onboarding_done', 'true');
+  };
 
   // Charge les polices (Barlow Condensed pour les titres, DM Sans pour le texte)
   const [fontsLoaded] = useFonts({
@@ -185,7 +217,7 @@ export default function App() {
   });
 
   // Écran de chargement pendant que les polices et l'auth se chargent
-  if (!fontsLoaded || authLoading) {
+  if (!fontsLoaded || authLoading || !onboardingLoaded) {
     return (
       <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={Colors.accent} />
@@ -197,10 +229,16 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+        {/* Bannière hors ligne */}
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <Text style={styles.offlineText}>Pas de connexion internet</Text>
+          </View>
+        )}
         <NavigationContainer theme={navigationTheme}>
           {!onboardingDone && !user ? (
             // Pas encore vu l'onboarding → on le montre
-            <OnboardingScreen onComplete={() => setOnboardingDone(true)} />
+            <OnboardingScreen onComplete={handleOnboardingComplete} />
           ) : !user ? (
             // Onboarding vu mais pas connecté → écran de connexion
             <AuthScreen />
@@ -214,12 +252,24 @@ export default function App() {
   );
 }
 
+export default Sentry.wrap(App);
+
 const styles = StyleSheet.create({
   loadingScreen: {
     flex: 1,
     backgroundColor: Colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  offlineBanner: {
+    backgroundColor: Colors.error,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  offlineText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 12,
+    color: '#FFFFFF',
   },
   addButton: {
     width: 52,

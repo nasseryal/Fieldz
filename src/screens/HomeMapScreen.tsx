@@ -14,6 +14,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
+import { MAX_VISIBLE_MARKERS } from '../constants/app';
 import { FontSizes } from '../constants/typography';
 import { darkMapStyle } from '../constants/mapStyle';
 import { getSportById, ALL_SPORTS } from '../constants/sports';
@@ -92,7 +93,7 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
         onPress={() => setSelectedSpot(null)}
       >
         {/* Marqueurs des spots (max 200 pour la performance) */}
-        {spots.slice(0, 200).map(spot => {
+        {spots.slice(0, MAX_VISIBLE_MARKERS).map(spot => {
           const sport = getSportById(spot.sport);
           const isSelected = selectedSpot?.id === spot.id;
           return (

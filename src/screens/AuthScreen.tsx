@@ -24,9 +24,21 @@ export const AuthScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
   const handleSubmit = async () => {
     if (!email || !password) {
       Alert.alert('Oups', 'Remplis tous les champs');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert('Oups', 'Entre une adresse email valide');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Oups', 'Le mot de passe doit faire au moins 6 caractères');
       return;
     }
 

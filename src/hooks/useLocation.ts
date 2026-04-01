@@ -44,7 +44,7 @@ export const useLocation = () => {
       });
     } catch (err) {
       setError('Impossible de récupérer ta position');
-      console.error('Erreur GPS:', err);
+      // Erreur GPS — position par défaut utilisée
     } finally {
       setLoading(false);
     }

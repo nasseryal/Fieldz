@@ -68,7 +68,8 @@ export const fetchSpotsFromGouv = async (
       allSpots.push(...spots);
     }
   } catch (error) {
-    console.error('Erreur API gouvernementale:', error);
+    // Retourne ce qu'on a récupéré jusqu'ici (peut être partiel)
+    return allSpots;
   }
 
   return allSpots;
@@ -139,7 +140,7 @@ export const importAllSports = async (
         onProgress(sport.name, 0);
       }
     } catch (error) {
-      console.error(`Erreur import ${sport.name}:`, error);
+      // Erreur import — on continue avec le sport suivant
       onProgress(sport.name, -1);
     }
   }

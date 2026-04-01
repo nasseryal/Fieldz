@@ -56,6 +56,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ onSpotDetails }) => {
   const {
     spots,
     loading: spotsLoading,
+    error: spotsError,
     filters,
     setSportFilter,
     setAccessFilter,
@@ -219,13 +220,15 @@ export const MapScreen: React.FC<MapScreenProps> = ({ onSpotDetails }) => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>
-              {!filters.sport ? '👆' : spotsLoading ? '⏳' : '🏟️'}
+              {!filters.sport ? '👆' : spotsLoading ? '⏳' : spotsError ? '⚠️' : '🏟️'}
             </Text>
             <Text style={styles.emptyTitle}>
               {!filters.sport
                 ? 'Choisis un sport'
                 : spotsLoading
                 ? 'Chargement...'
+                : spotsError
+                ? 'Erreur de chargement'
                 : 'Aucun spot trouvé'}
             </Text>
             <Text style={styles.emptySubtitle}>
@@ -233,6 +236,8 @@ export const MapScreen: React.FC<MapScreenProps> = ({ onSpotDetails }) => {
                 ? 'Sélectionne un sport ci-dessus pour voir les terrains'
                 : spotsLoading
                 ? 'On cherche les terrains...'
+                : spotsError
+                ? spotsError
                 : 'Essaie une autre recherche ou ajoute un spot !'}
             </Text>
           </View>

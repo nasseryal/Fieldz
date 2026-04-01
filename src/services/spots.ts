@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Spot, Coords } from '../types';
+import { FIRESTORE_SPOTS_LIMIT, NEARBY_DEPARTMENTS_COUNT } from '../constants/app';
 
 const SPOTS_COLLECTION = 'spots';
 
@@ -37,7 +38,7 @@ export const getSpotsBySportNearby = async (
       where('sport', '==', sportId),
       where('codePostal', '>=', minCP),
       where('codePostal', '<=', maxCP),
-      limit(200)
+      limit(FIRESTORE_SPOTS_LIMIT)
     );
     return getDocs(q);
   });
@@ -78,8 +79,8 @@ export const getAllSpots = async (coords?: Coords): Promise<Spot[]> => {
 
     return allSpots;
   } catch (error) {
-    console.error('Erreur getAllSpots:', error);
-    return [];
+    // Propage l'erreur au hook pour afficher un message à l'utilisateur
+    throw error;
   }
 };
 
@@ -118,7 +119,7 @@ const getNearbyDepartments = (lat: number, lon: number): string[] => {
   }));
 
   withDist.sort((a, b) => a.dist - b.dist);
-  return withDist.slice(0, 4).map(d => d.code);
+  return withDist.slice(0, NEARBY_DEPARTMENTS_COUNT).map(d => d.code);
 };
 
 // Récupère un spot par son ID
