@@ -118,10 +118,8 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
             <Marker
               key={spot.id}
               coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleMarkerPress(spot);
-              }}
+              onPress={() => handleMarkerPress(spot)}
+              stopPropagation
               tracksViewChanges={false}
               pinColor={sport?.color ?? Colors.accent}
             />
