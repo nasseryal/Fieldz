@@ -15,6 +15,7 @@ import { ref, listAll, deleteObject } from 'firebase/storage';
 import { auth, db, storage } from './firebase';
 import { UserProfile } from '../types';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 
 // Connexion avec email + mot de passe
 export const signInWithEmail = async (email: string, password: string) => {
@@ -36,18 +37,28 @@ export const signUpWithEmail = async (
 
 // Sign in with Apple
 export const signInWithApple = async () => {
+  // Génère un nonce (code de sécurité unique) que Firebase exige pour vérifier le token Apple
+  const rawNonce = Math.random().toString(36).substring(2, 10) +
+    Math.random().toString(36).substring(2, 10);
+  const hashedNonce = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    rawNonce
+  );
+
   // Demande les identifiants Apple à l'utilisateur
   const credential = await AppleAuthentication.signInAsync({
     requestedScopes: [
       AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
       AppleAuthentication.AppleAuthenticationScope.EMAIL,
     ],
+    nonce: hashedNonce,
   });
 
-  // Crée un credential Firebase avec le token Apple
+  // Crée un credential Firebase avec le token Apple + le nonce original
   const oAuthProvider = new OAuthProvider('apple.com');
   const firebaseCredential = oAuthProvider.credential({
     idToken: credential.identityToken!,
+    rawNonce,
   });
 
   // Connecte l'utilisateur dans Firebase
