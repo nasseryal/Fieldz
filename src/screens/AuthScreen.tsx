@@ -145,6 +145,7 @@ export const AuthScreen: React.FC = () => {
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+            maxLength={50}
           />
         )}
 
