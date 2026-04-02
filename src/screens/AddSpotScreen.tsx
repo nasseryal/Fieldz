@@ -89,7 +89,7 @@ export const AddSpotScreen: React.FC = () => {
         // Pas grave si le reverse geocoding échoue
       }
 
-      const spotId = await addSpot({
+      const spotData: any = {
         nom,
         sport: sportId,
         latitude: location.latitude,
@@ -98,12 +98,16 @@ export const AddSpotScreen: React.FC = () => {
         ville: spotVille,
         codePostal: spotCodePostal,
         acces,
-        prixEstime: acces === 'payant' ? prix : undefined,
         equipements: [],
         photos: [],
         source: 'utilisateur',
-        ajoutePar: user?.uid,
-      });
+        ajoutePar: user.uid,
+      };
+      if (acces === 'payant' && prix) {
+        spotData.prixEstime = prix;
+      }
+
+      const spotId = await addSpot(spotData);
 
       // Upload la photo et lie l'URL au spot
       if (photoUri) {

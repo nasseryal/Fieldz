@@ -80,7 +80,7 @@ export const AuthScreen: React.FC = () => {
     }
     try {
       await resetPassword(email);
-      Alert.alert('Email envoyé ✉️', `Un lien pour réinitialiser ton mot de passe a été envoyé à ${email}`);
+      Alert.alert('Email envoyé ✉️', `Un lien a été envoyé à ${email}. Vérifie aussi tes spams si tu ne le vois pas.`);
     } catch (error: any) {
       const message = error.code === 'auth/user-not-found'
         ? 'Aucun compte avec cet email'

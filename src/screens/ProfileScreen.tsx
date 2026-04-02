@@ -73,10 +73,12 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleContact = async () => {
-    try {
-      await Linking.openURL('mailto:fieldz.app.contact@gmail.com');
-    } catch {
-      Alert.alert('Erreur', 'Impossible d\'ouvrir le mail.');
+    const email = 'fieldz.app.contact@gmail.com';
+    const canOpen = await Linking.canOpenURL(`mailto:${email}`);
+    if (canOpen) {
+      await Linking.openURL(`mailto:${email}?subject=Fieldz%20-%20Contact`);
+    } else {
+      Alert.alert('Email', `Écris-nous à ${email}`);
     }
   };
 

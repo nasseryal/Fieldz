@@ -188,7 +188,7 @@ function App() {
   // Détecte si l'utilisateur est hors ligne
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOffline(!state.isConnected);
+      setIsOffline(state.isConnected === false);
     });
     return () => unsubscribe();
   }, []);

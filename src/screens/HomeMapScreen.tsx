@@ -1,5 +1,5 @@
 // Écran Carte — home page avec carte Google Maps plein écran + marqueurs colorés
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,20 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const mapRef = useRef<MapView>(null);
+  const hascentered = useRef(false);
+
+  // Centre la carte sur le GPS dès qu'on a la vraie position (pas Paris)
+  useEffect(() => {
+    if (!hascentered.current && coords.latitude !== 48.8566 && coords.longitude !== 2.3522) {
+      hascentered.current = true;
+      mapRef.current?.animateToRegion({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 500);
+    }
+  }, [coords.latitude, coords.longitude]);
 
   const activeSportColor = selectedSport
     ? getSportById(selectedSport)?.color ?? Colors.accent
@@ -106,24 +120,30 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
               key={spot.id}
               coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
               onPress={() => handleMarkerPress(spot)}
+              tracksViewChanges={false}
             >
-              <View style={[
-                styles.marker,
-                {
-                  backgroundColor: (sport?.color ?? Colors.accent) + '20',
-                  borderColor: sport?.color ?? Colors.accent,
-                },
-                isSelected && styles.markerSelected,
-              ]}>
-                <Text style={[styles.markerEmoji, isSelected && styles.markerEmojiSelected]}>
-                  {sport?.emoji ?? '📍'}
-                </Text>
-                {spot.acces === 'payant' && (
-                  <View style={styles.paidBadge}>
-                    <Text style={styles.paidText}>€</Text>
-                  </View>
-                )}
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleMarkerPress(spot)}
+              >
+                <View style={[
+                  styles.marker,
+                  {
+                    backgroundColor: (sport?.color ?? Colors.accent) + '20',
+                    borderColor: sport?.color ?? Colors.accent,
+                  },
+                  isSelected && styles.markerSelected,
+                ]}>
+                  <Text style={[styles.markerEmoji, isSelected && styles.markerEmojiSelected]}>
+                    {sport?.emoji ?? '📍'}
+                  </Text>
+                  {spot.acces === 'payant' && (
+                    <View style={styles.paidBadge}>
+                      <Text style={styles.paidText}>€</Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
             </Marker>
           );
         })}
@@ -187,6 +207,22 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
           </View>
         </Animated.View>
       )}
+
+      {/* Bouton recentrer sur ma position */}
+      <TouchableOpacity
+        style={styles.recenterButton}
+        onPress={() => {
+          mapRef.current?.animateToRegion({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }, 500);
+        }}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.recenterIcon}>📍</Text>
+      </TouchableOpacity>
 
       {/* Barre de sports en bas */}
       {!selectedSpot && (
@@ -401,5 +437,24 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: FontSizes.xs,
     color: Colors.textSecondary,
+  },
+  recenterButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 100,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.backgroundCard,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  recenterIcon: {
+    fontSize: 20,
   },
 });
