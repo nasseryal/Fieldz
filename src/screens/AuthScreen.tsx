@@ -158,6 +158,7 @@ export const AuthScreen: React.FC = () => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          maxLength={256}
         />
 
         {/* Champ mot de passe */}
@@ -168,6 +169,7 @@ export const AuthScreen: React.FC = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          maxLength={128}
         />
 
         {/* Mot de passe oublié (mode connexion uniquement) */}
