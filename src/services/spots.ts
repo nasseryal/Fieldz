@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Spot, Coords } from '../types';
-import { FIRESTORE_SPOTS_LIMIT, NEARBY_DEPARTMENTS_COUNT } from '../constants/app';
+import { FIRESTORE_SPOTS_LIMIT, NEARBY_DEPARTMENTS_COUNT, EARTH_RADIUS_KM } from '../constants/app';
 
 const SPOTS_COLLECTION = 'spots';
 
@@ -94,7 +94,7 @@ export const getDistanceKm = (
   lat1: number, lon1: number,
   lat2: number, lon2: number
 ): number => {
-  const R = 6371;
+  const R = EARTH_RADIUS_KM;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =

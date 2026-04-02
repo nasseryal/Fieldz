@@ -74,10 +74,14 @@ export const ProfileScreen: React.FC = () => {
 
   const handleContact = async () => {
     const email = 'fieldz.app.contact@gmail.com';
-    const canOpen = await Linking.canOpenURL(`mailto:${email}`);
-    if (canOpen) {
-      await Linking.openURL(`mailto:${email}?subject=Fieldz%20-%20Contact`);
-    } else {
+    try {
+      const canOpen = await Linking.canOpenURL(`mailto:${email}`);
+      if (canOpen) {
+        await Linking.openURL(`mailto:${email}?subject=Fieldz%20-%20Contact`);
+      } else {
+        Alert.alert('Email', `Écris-nous à ${email}`);
+      }
+    } catch {
       Alert.alert('Email', `Écris-nous à ${email}`);
     }
   };
@@ -133,12 +137,11 @@ export const ProfileScreen: React.FC = () => {
           <MenuItem
             emoji="🔒"
             label="Politique de confidentialité"
-            onPress={async () => {
-              try {
-                await Linking.openURL('https://github.com/nasseryal/Fieldz/blob/master/PRIVACY.md');
-              } catch {
-                Alert.alert('Erreur', 'Impossible d\'ouvrir le lien.');
-              }
+            onPress={() => {
+              Alert.alert(
+                'Politique de confidentialité',
+                'Disponible sur l\'App Store, dans la fiche de l\'application.'
+              );
             }}
           />
         </Animated.View>

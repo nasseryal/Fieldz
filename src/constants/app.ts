@@ -13,3 +13,9 @@ export const DEDUP_DISTANCE_THRESHOLD = 0.0003; // ~30 mètres
 export const TAB_BAR_HEIGHT = 85;
 export const TAB_BAR_PADDING_BOTTOM = 25;
 export const TAB_BAR_PADDING_TOP = 10;
+
+// Géographie
+export const EARTH_RADIUS_KM = 6371;
+
+// Réseau
+export const NOMINATIM_TIMEOUT_MS = 10000;

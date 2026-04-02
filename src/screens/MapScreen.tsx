@@ -22,12 +22,13 @@ import { AccessBadge } from '../components/AccessBadge';
 import { useLocation } from '../hooks/useLocation';
 import { useSpots } from '../hooks/useSpots';
 import { getDistanceKm } from '../services/spots';
+import { NOMINATIM_TIMEOUT_MS } from '../constants/app';
 
 // API gratuite pour convertir une adresse en coordonnées GPS
 const geocodeAddress = async (text: string): Promise<Coords | null> => {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), NOMINATIM_TIMEOUT_MS);
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)},France&limit=1`,
       { headers: { 'User-Agent': 'Fieldz-App/1.0 (fieldz.app.contact@gmail.com)' }, signal: controller.signal }
@@ -39,6 +40,7 @@ const geocodeAddress = async (text: string): Promise<Coords | null> => {
     }
     return null;
   } catch {
+    // Nominatim peut échouer (réseau, timeout) — on retourne null sans bloquer
     return null;
   }
 };

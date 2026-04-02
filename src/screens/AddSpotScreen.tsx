@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { FontSizes } from '../constants/typography';
 import { ALL_SPORTS } from '../constants/sports';
+import { Spot } from '../types';
 import { useLocation } from '../hooks/useLocation';
 import { useAuth } from '../hooks/useAuth';
 import { addSpot } from '../services/spots';
@@ -89,7 +90,7 @@ export const AddSpotScreen: React.FC = () => {
         // Pas grave si le reverse geocoding échoue
       }
 
-      const spotData: any = {
+      const spotData: Omit<Spot, 'id' | 'createdAt' | 'updatedAt' | 'signalements' | 'valide'> = {
         nom,
         sport: sportId,
         latitude: location.latitude,
@@ -254,6 +255,7 @@ export const AddSpotScreen: React.FC = () => {
                   placeholderTextColor={Colors.textMuted}
                   value={prix}
                   onChangeText={setPrix}
+                  maxLength={20}
                 />
               </>
             )}
