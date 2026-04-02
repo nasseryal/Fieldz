@@ -34,6 +34,9 @@ yarn-error.*
 .env
 .env*.local
 
+# Firebase config (contient des clés)
+GoogleService-Info.plist
+
 # typescript
 *.tsbuildinfo
 
