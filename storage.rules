@@ -9,6 +9,10 @@ service firebase.storage {
       allow write: if request.auth != null
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+      // Limitation connue : tout utilisateur connecté peut supprimer les photos
+      // Storage rules ne permettent pas de vérifier le propriétaire du fichier
+      // Risque faible : il faut connaître spotId + fileName exact
+      // TODO v2 : inclure l'uid dans le path pour restreindre (spots/{spotId}/{uid}/{fileName})
       allow delete: if request.auth != null;
     }
   }

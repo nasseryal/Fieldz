@@ -159,7 +159,7 @@ export const AddSpotScreen: React.FC = () => {
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>📍 Où se trouve le spot ?</Text>
             <Text style={styles.stepDescription}>
-              Déplace le marqueur sur la carte pour indiquer l'emplacement exact.
+              Ta position GPS actuelle sera utilisée pour localiser le spot.
             </Text>
             <View style={styles.mapContainer}>
               <View style={styles.mapPlaceholder}>

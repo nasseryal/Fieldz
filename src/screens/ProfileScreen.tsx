@@ -134,16 +134,6 @@ export const ProfileScreen: React.FC = () => {
             label="Nous contacter"
             onPress={handleContact}
           />
-          <MenuItem
-            emoji="🔒"
-            label="Politique de confidentialité"
-            onPress={() => {
-              Alert.alert(
-                'Politique de confidentialité',
-                'Disponible sur l\'App Store, dans la fiche de l\'application.'
-              );
-            }}
-          />
         </Animated.View>
 
         {/* Déconnexion */}

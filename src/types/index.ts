@@ -59,4 +59,3 @@ export interface Coords {
   longitude: number;
 }
 
-// Résultat de l'API gouvernementale (plus utilisé directement, voir sportsData.ts)
