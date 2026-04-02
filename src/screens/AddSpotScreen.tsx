@@ -77,7 +77,7 @@ export const AddSpotScreen: React.FC = () => {
       try {
         const geoResp = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-          { headers: { 'User-Agent': 'Fieldz-App' } }
+          { headers: { 'User-Agent': 'Fieldz-App/1.0 (fieldz.app.contact@gmail.com)' } }
         );
         const geoData = await geoResp.json();
         if (geoData.address) {

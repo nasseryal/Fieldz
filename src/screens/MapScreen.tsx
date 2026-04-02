@@ -30,7 +30,7 @@ const geocodeAddress = async (text: string): Promise<Coords | null> => {
     const timeout = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)},France&limit=1`,
-      { headers: { 'User-Agent': 'Fieldz-App' }, signal: controller.signal }
+      { headers: { 'User-Agent': 'Fieldz-App/1.0 (fieldz.app.contact@gmail.com)' }, signal: controller.signal }
     );
     clearTimeout(timeout);
     const data = await response.json();
