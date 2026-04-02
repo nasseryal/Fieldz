@@ -16,6 +16,7 @@ export const TAB_BAR_PADDING_TOP = 10;
 
 // Géographie
 export const EARTH_RADIUS_KM = 6371;
+export const DEFAULT_COORDS = { latitude: 48.8566, longitude: 2.3522 }; // Paris
 
 // Réseau
 export const NOMINATIM_TIMEOUT_MS = 10000;

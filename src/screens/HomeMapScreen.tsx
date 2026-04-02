@@ -15,7 +15,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Colors } from '../constants/colors';
-import { MAX_VISIBLE_MARKERS } from '../constants/app';
+import { MAX_VISIBLE_MARKERS, DEFAULT_COORDS } from '../constants/app';
 import { FontSizes } from '../constants/typography';
 import { darkMapStyle } from '../constants/mapStyle';
 import { getSportById, ALL_SPORTS } from '../constants/sports';
@@ -47,7 +47,7 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
 
   // Centre la carte sur le GPS dès qu'on a la vraie position (pas Paris)
   useEffect(() => {
-    if (!hascentered.current && coords.latitude !== 48.8566 && coords.longitude !== 2.3522) {
+    if (!hascentered.current && coords.latitude !== DEFAULT_COORDS.latitude && coords.longitude !== DEFAULT_COORDS.longitude) {
       hascentered.current = true;
       mapRef.current?.animateToRegion({
         latitude: coords.latitude,

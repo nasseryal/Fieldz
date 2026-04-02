@@ -3,12 +3,7 @@
 import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
 import { Coords } from '../types';
-
-// Position par défaut : Paris (si le GPS ne marche pas)
-const DEFAULT_COORDS: Coords = {
-  latitude: 48.8566,
-  longitude: 2.3522,
-};
+import { DEFAULT_COORDS } from '../constants/app';
 
 export const useLocation = () => {
   const [coords, setCoords] = useState<Coords>(DEFAULT_COORDS);
