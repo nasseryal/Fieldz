@@ -5,8 +5,5 @@ export const sportConfig: SportConfig = {
   name: 'Fitness',
   emoji: '💪',
   color: '#FF5722',
-  colorDark: '#E64A19',
-  icon: 'dumbbell',
   dataGovCategory: 'Musculation',
-  allowsPaid: false,
 };

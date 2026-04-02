@@ -32,10 +32,7 @@ export interface SportConfig {
   name: string;
   emoji: string;
   color: string;
-  colorDark: string;
-  icon: string;
   dataGovCategory: string;
-  allowsPaid: boolean;
 }
 
 // Utilisateur connecté

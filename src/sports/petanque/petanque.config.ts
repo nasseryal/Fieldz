@@ -5,8 +5,5 @@ export const sportConfig: SportConfig = {
   name: 'Pétanque',
   emoji: '🎳',
   color: '#9E9E9E',
-  colorDark: '#757575',
-  icon: 'circle',
   dataGovCategory: 'Pétanque et jeu provençal',
-  allowsPaid: false,
 };

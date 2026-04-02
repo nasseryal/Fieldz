@@ -5,8 +5,5 @@ export const sportConfig: SportConfig = {
   name: 'Football',
   emoji: '⚽',
   color: '#4CAF50',
-  colorDark: '#388E3C',
-  icon: 'football',
   dataGovCategory: 'Football / Football en salle (Futsal)',
-  allowsPaid: true,
 };

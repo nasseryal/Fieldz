@@ -108,10 +108,9 @@ export const AddSpotScreen: React.FC = () => {
       // Upload la photo et lie l'URL au spot
       if (photoUri) {
         const photoUrl = await uploadSpotPhoto(photoUri, spotId);
-        // Met à jour le spot avec l'URL de la photo
-        const { doc, updateDoc } = await import('firebase/firestore');
+        const { doc: firestoreDoc, updateDoc, arrayUnion } = await import('firebase/firestore');
         const { db } = await import('../services/firebase');
-        await updateDoc(doc(db, 'spots', spotId), { photos: [photoUrl] });
+        await updateDoc(firestoreDoc(db, 'spots', spotId), { photos: arrayUnion(photoUrl) });
       }
 
       Alert.alert('Bravo ! 🎉', 'Ton spot a été ajouté avec succès');
@@ -333,8 +332,8 @@ export const AddSpotScreen: React.FC = () => {
         </View>
 
         {/* Lien ignorer la photo */}
-        {step === 3 && !photoUri && (
-          <TouchableOpacity onPress={handleSubmit} style={styles.skipPhoto}>
+        {step === 3 && !photoUri && !loading && (
+          <TouchableOpacity onPress={handleSubmit} style={styles.skipPhoto} disabled={loading}>
             <Text style={styles.skipPhotoText}>Passer sans photo</Text>
           </TouchableOpacity>
         )}

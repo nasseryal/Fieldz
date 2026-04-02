@@ -5,8 +5,5 @@ export const sportConfig: SportConfig = {
   name: 'Tennis',
   emoji: '🎾',
   color: '#FFEB3B',
-  colorDark: '#FBC02D',
-  icon: 'tennis',
   dataGovCategory: 'Tennis',
-  allowsPaid: true,
 };

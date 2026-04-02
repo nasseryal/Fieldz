@@ -1,5 +1,5 @@
 // Carrousel de photos — glisse horizontalement pour voir les photos d'un spot
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Image,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Colors } from '../constants/colors';
 
@@ -25,6 +27,13 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
   sportEmoji = '📍',
   sportColor = Colors.accent,
 }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / PHOTO_WIDTH);
+    setActiveIndex(index);
+  };
+
   if (photos.length === 0) {
     return (
       <View style={[styles.placeholder, { backgroundColor: sportColor + '20' }]}>
@@ -41,6 +50,7 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         style={styles.container}
+        onMomentumScrollEnd={handleScroll}
       >
         {photos.map((photo, index) => (
           <Image
@@ -48,16 +58,20 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({
             source={{ uri: photo }}
             style={styles.photo}
             resizeMode="cover"
-            defaultSource={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88P/BfwAJhAPk3KEbdwAAAABJRU5ErkJggg==' }}
           />
         ))}
       </ScrollView>
 
-      {/* Indicateur de page (les petits points) */}
       {photos.length > 1 && (
         <View style={styles.dots}>
           {photos.map((_, index) => (
-            <View key={index} style={styles.dot} />
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                index === activeIndex && styles.dotActive,
+              ]}
+            />
           ))}
         </View>
       )}
@@ -101,6 +115,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.textSecondary,
+    backgroundColor: Colors.textMuted,
+  },
+  dotActive: {
+    backgroundColor: Colors.text,
+    width: 18,
   },
 });

@@ -5,8 +5,5 @@ export const sportConfig: SportConfig = {
   name: 'Basket',
   emoji: '🏀',
   color: '#FF9800',
-  colorDark: '#F57C00',
-  icon: 'basketball',
   dataGovCategory: 'Basket-Ball',
-  allowsPaid: true,
 };
