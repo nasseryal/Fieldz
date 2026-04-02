@@ -114,37 +114,17 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
         {/* Marqueurs des spots (max 200 pour la performance) */}
         {spots.slice(0, MAX_VISIBLE_MARKERS).map(spot => {
           const sport = getSportById(spot.sport);
-          const isSelected = selectedSpot?.id === spot.id;
           return (
             <Marker
               key={spot.id}
               coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
-              onPress={() => handleMarkerPress(spot)}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleMarkerPress(spot);
+              }}
               tracksViewChanges={false}
-            >
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => handleMarkerPress(spot)}
-              >
-                <View style={[
-                  styles.marker,
-                  {
-                    backgroundColor: (sport?.color ?? Colors.accent) + '20',
-                    borderColor: sport?.color ?? Colors.accent,
-                  },
-                  isSelected && styles.markerSelected,
-                ]}>
-                  <Text style={[styles.markerEmoji, isSelected && styles.markerEmojiSelected]}>
-                    {sport?.emoji ?? '📍'}
-                  </Text>
-                  {spot.acces === 'payant' && (
-                    <View style={styles.paidBadge}>
-                      <Text style={styles.paidText}>€</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </Marker>
+              pinColor={sport?.color ?? Colors.accent}
+            />
           );
         })}
       </MapView>
@@ -267,43 +247,6 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
-  },
-  // Marqueurs
-  marker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  markerSelected: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 3,
-  },
-  markerEmoji: {
-    fontSize: 18,
-  },
-  markerEmojiSelected: {
-    fontSize: 22,
-  },
-  paidBadge: {
-    position: 'absolute',
-    top: -3,
-    right: -3,
-    backgroundColor: '#FF9800',
-    width: 15,
-    height: 15,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  paidText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   // Header
   headerSafeArea: {

@@ -2,7 +2,7 @@
 // C'est le chef d'orchestre qui gère quelle page afficher
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, StatusBar, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
@@ -190,7 +190,18 @@ function App() {
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsOffline(state.isConnected === false);
     });
-    return () => unsubscribe();
+    // Rafraîchit au retour au premier plan (iOS ne notifie pas toujours depuis le Control Center)
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        NetInfo.fetch().then(state => {
+          setIsOffline(state.isConnected === false);
+        });
+      }
+    });
+    return () => {
+      unsubscribe();
+      appStateSub.remove();
+    };
   }, []);
 
   // Vérifie si l'utilisateur a déjà vu l'onboarding
@@ -230,12 +241,6 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
-        {/* Bannière hors ligne */}
-        {isOffline && (
-          <View style={styles.offlineBanner}>
-            <Text style={styles.offlineText}>Pas de connexion internet</Text>
-          </View>
-        )}
         <NavigationContainer theme={navigationTheme}>
           {!onboardingDone && !user ? (
             // Pas encore vu l'onboarding → on le montre
@@ -248,6 +253,11 @@ function App() {
             <TabNavigator />
           )}
         </NavigationContainer>
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <Text style={styles.offlineText}>Pas de connexion internet</Text>
+          </View>
+        )}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -263,9 +273,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   offlineBanner: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
     backgroundColor: Colors.error,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
     alignItems: 'center',
+    zIndex: 9999,
   },
   offlineText: {
     fontFamily: 'DMSans_500Medium',
