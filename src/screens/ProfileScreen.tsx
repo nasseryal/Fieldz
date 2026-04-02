@@ -17,6 +17,7 @@ import { FontSizes } from '../constants/typography';
 import { useAuth } from '../hooks/useAuth';
 import { signOut, deleteAccount } from '../services/auth';
 import { FieldzLogo } from '../components/FieldzLogo';
+import Constants from 'expo-constants';
 
 // Email admin — dans une variable d'env pour ne pas être en dur
 const ADMIN_EMAIL = process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? '';
@@ -71,9 +72,9 @@ export const ProfileScreen: React.FC = () => {
     );
   };
 
-  const handleContact = () => {
+  const handleContact = async () => {
     try {
-      Linking.openURL('mailto:fieldz.app.contact@gmail.com');
+      await Linking.openURL('mailto:fieldz.app.contact@gmail.com');
     } catch {
       Alert.alert('Erreur', 'Impossible d\'ouvrir le mail.');
     }
@@ -130,9 +131,9 @@ export const ProfileScreen: React.FC = () => {
           <MenuItem
             emoji="🔒"
             label="Politique de confidentialité"
-            onPress={() => {
+            onPress={async () => {
               try {
-                Linking.openURL('https://github.com/nasseryal/Fieldz/blob/master/PRIVACY.md');
+                await Linking.openURL('https://github.com/nasseryal/Fieldz/blob/master/PRIVACY.md');
               } catch {
                 Alert.alert('Erreur', 'Impossible d\'ouvrir le lien.');
               }
@@ -163,7 +164,7 @@ export const ProfileScreen: React.FC = () => {
         </Animated.View>
 
         {/* Version */}
-        <Text style={styles.version}>Fieldz v1.0.0</Text>
+        <Text style={styles.version}>Fieldz v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>

@@ -1,6 +1,6 @@
 // Service API gouvernementale — récupère les équipements sportifs de data.gouv.fr
 // C'est comme un annuaire officiel de tous les terrains de sport en France
-import { doc, setDoc, writeBatch, Timestamp } from 'firebase/firestore';
+import { doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { Spot } from '../types';
 import { ALL_SPORTS } from '../constants/sports';

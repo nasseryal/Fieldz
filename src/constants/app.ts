@@ -9,9 +9,6 @@ export const FIRESTORE_SPOTS_LIMIT = 200;
 export const DEFAULT_RADIUS_KM = 10;
 export const DEDUP_DISTANCE_THRESHOLD = 0.0003; // ~30 mètres
 
-// Pagination
-export const SPOTS_PER_PAGE = 10;
-
 // Tab bar
 export const TAB_BAR_HEIGHT = 85;
 export const TAB_BAR_PADDING_BOTTOM = 25;

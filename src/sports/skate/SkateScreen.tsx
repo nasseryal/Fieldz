@@ -15,13 +15,13 @@ interface SportScreenProps {
 }
 
 const SkateScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
-  const handleNavigate = () => {
+  const handleNavigate = async () => {
     const url = Platform.select({
       ios: `maps://app?daddr=${spot.latitude},${spot.longitude}`,
       android: `google.navigation:q=${spot.latitude},${spot.longitude}`,
     });
     try {
-      if (url) Linking.openURL(url);
+      if (url) await Linking.openURL(url);
     } catch { Alert.alert('Erreur', 'Navigation indisponible'); }
   };
 
@@ -80,9 +80,15 @@ const SkateScreen: React.FC<SportScreenProps> = ({ spot, onBack }) => {
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionButton, styles.actionButtonOutline]} onPress={async () => {
               try {
-                const { pickImage } = await import('../../services/storage');
+                const { pickImage, uploadSpotPhoto } = await import('../../services/storage');
                 const uri = await pickImage();
-                if (uri) Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+                if (uri) {
+                  const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
+                  const { db } = await import('../../services/firebase');
+                  const photoUrl = await uploadSpotPhoto(uri, spot.id);
+                  await updateDoc(doc(db, 'spots', spot.id), { photos: arrayUnion(photoUrl) });
+                  Alert.alert('Photo ajoutée', 'Merci pour ta contribution !');
+                }
               } catch {
                 Alert.alert('Erreur', 'Impossible d\'ajouter la photo.');
               }

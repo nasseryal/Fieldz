@@ -50,5 +50,5 @@ export const useLocation = () => {
     }
   };
 
-  return { coords, loading, error, refreshLocation: getLocation };
+  return { coords, loading, error };
 };

@@ -67,13 +67,13 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
   }, []);
 
   // Ouvre le GPS pour naviguer vers un spot
-  const handleNavigate = (spot: Spot) => {
+  const handleNavigate = async (spot: Spot) => {
     const url = Platform.select({
       ios: `maps://app?daddr=${spot.latitude},${spot.longitude}`,
       android: `google.navigation:q=${spot.latitude},${spot.longitude}`,
     });
     try {
-      if (url) Linking.openURL(url);
+      if (url) await Linking.openURL(url);
     } catch {
       Alert.alert('Erreur', 'Impossible d\'ouvrir la navigation.');
     }

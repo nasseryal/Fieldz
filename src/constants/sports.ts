@@ -31,13 +31,3 @@ export const ALL_SPORTS: SportConfig[] = [
 export const getSportById = (id: string): SportConfig | undefined => {
   return ALL_SPORTS.find(sport => sport.id === id);
 };
-
-// Couleur d'un sport par son ID — utile pour les marqueurs
-export const getSportColor = (id: string): string => {
-  return getSportById(id)?.color ?? '#FFFFFF';
-};
-
-// Emoji d'un sport par son ID
-export const getSportEmoji = (id: string): string => {
-  return getSportById(id)?.emoji ?? '📍';
-};

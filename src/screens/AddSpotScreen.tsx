@@ -21,7 +21,6 @@ import { useAuth } from '../hooks/useAuth';
 import { addSpot } from '../services/spots';
 import { uploadSpotPhoto } from '../services/storage';
 import { pickImage, takePhoto } from '../services/storage';
-import { Timestamp } from 'firebase/firestore';
 
 export const AddSpotScreen: React.FC = () => {
   const { coords } = useLocation();

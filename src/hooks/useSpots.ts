@@ -108,14 +108,10 @@ export const useSpots = (coords: Coords) => {
 
   return {
     spots: filteredSpots,
-    allSpots: spots,
     loading,
     error,
     filters,
-    distanceKm,
-    setDistanceKm,
     setSportFilter,
     setAccessFilter,
-    refreshSpots: () => filters.sport && loadSportSpots(filters.sport),
   };
 };

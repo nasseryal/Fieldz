@@ -17,18 +17,11 @@ export const Colors = {
   borderLight: 'rgba(255,255,255,0.15)',
 
   // Accents
-  accent: '#4CAF50', // vert par défaut
-  accentDark: '#388E3C',
+  accent: '#4CAF50',
   error: '#F44336',
-  warning: '#FF9800',
-  success: '#4CAF50',
 
   // Badges
   gratuit: '#4CAF50',
   payant: '#FF9800',
   mixte: '#2196F3',
-
-  // Overlay
-  overlay: 'rgba(0,0,0,0.6)',
-  overlayLight: 'rgba(0,0,0,0.3)',
 } as const;
