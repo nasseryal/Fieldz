@@ -25,24 +25,33 @@ workflows:
         script: cd ios && pod install
       - name: Set up code signing
         script: |
-          # 1. Télécharger le certificat depuis Apple Developer
-          app-store-connect fetch-signing-files "com.fieldz.app" \
-            --type IOS_APP_STORE \
-            --create
-
-          # 2. Installer le certificat dans le keychain
+          # 1. Initialiser le keychain
           keychain initialize
-          keychain add-certificates
+
+          # 2. Décoder et installer le certificat .p12
+          CERT_DIR="$HOME/Library/MobileDevice/Certificates"
+          mkdir -p "$CERT_DIR"
+          echo "$CERTIFICATE_P12" | base64 --decode > "$CERT_DIR/fieldz_distribution.p12"
+          echo "Certificat installé: $(ls -la "$CERT_DIR/fieldz_distribution.p12")"
+
+          # 3. Importer le certificat dans le keychain
+          security import "$CERT_DIR/fieldz_distribution.p12" \
+            -k "$(keychain get-default)" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -k "" "$(keychain get-default)" 2>/dev/null || true
+          echo "Certificat importé dans le keychain"
 
           # 3. Installer NOTRE profile manuellement (celui avec Sign In with Apple)
           #    Le profile est encodé en base64 dans la variable PROVISIONING_PROFILE_FIELDZ
           PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
           mkdir -p "$PROFILES_DIR"
-          echo "$PROVISIONING_PROFILE_FIELDZ" | base64 --decode > "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision"
-          echo "Profile installé: $(ls -la "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision")"
+          echo "$PROVISIONING_PROFILE_FIELDZ" | base64 --decode > "$PROFILES_DIR/c9622cc5-6fed-4610-829b-19ea0cd399a2.mobileprovision"
+          echo "Profile installé: $(ls -la "$PROFILES_DIR/c9622cc5-6fed-4610-829b-19ea0cd399a2.mobileprovision")"
 
           # 4. Vérifier que le profile a la capability
-          security cms -D -i "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision" 2>/dev/null | grep -q "applesignin" \
+          security cms -D -i "$PROFILES_DIR/c9622cc5-6fed-4610-829b-19ea0cd399a2.mobileprovision" 2>/dev/null | grep -q "applesignin" \
             && echo "Sign In with Apple OK dans le profile" \
             || echo "ERREUR: Sign In with Apple ABSENT du profile"
 
@@ -83,7 +92,7 @@ workflows:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="M9C2G4BV44" \
             PROVISIONING_PROFILE_SPECIFIER="Fieldz AppStore Codemagic" \
-            PROVISIONING_PROFILE="bf6cea08-b84c-4c0a-9c55-651b446e3ecb"
+            PROVISIONING_PROFILE="c9622cc5-6fed-4610-829b-19ea0cd399a2"
 
           # 2. Créer ExportOptions.plist
           /usr/libexec/PlistBuddy -c "Clear dict" /tmp/ExportOptions.plist
