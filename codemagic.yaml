@@ -89,7 +89,8 @@ workflows:
           export NODE_BINARY=$(which node)
           echo "Node binary: $NODE_BINARY"
 
-          # 1. Archive
+          # 1. Archive (log capturé pour voir les erreurs)
+          set +e
           xcodebuild \
             -workspace "ios/Fieldz.xcworkspace" \
             -scheme "Fieldz" \
@@ -101,7 +102,25 @@ workflows:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="M9C2G4BV44" \
             PROVISIONING_PROFILE_SPECIFIER="Fieldz AppStore Codemagic" \
-            PROVISIONING_PROFILE="c9622cc5-6fed-4610-829b-19ea0cd399a2"
+            PROVISIONING_PROFILE="c9622cc5-6fed-4610-829b-19ea0cd399a2" \
+            2>&1 | tee /tmp/xcodebuild.log
+          BUILD_RESULT=${PIPESTATUS[0]}
+          set -e
+
+          if [ $BUILD_RESULT -ne 0 ]; then
+            echo ""
+            echo "=========================================="
+            echo "=== ERREURS DU BUILD ==="
+            echo "=========================================="
+            grep -i "error:" /tmp/xcodebuild.log | grep -v "ARCHIVE FAILED" | tail -20
+            echo ""
+            echo "=== SCRIPT BUNDLE REACT NATIVE ==="
+            grep -B5 -A10 "Bundle React Native" /tmp/xcodebuild.log | grep -i "error\|fail\|not found\|No such" | head -10
+            echo ""
+            echo "=== DERNIÈRES LIGNES AVANT ÉCHEC ==="
+            grep -B2 "FAILED" /tmp/xcodebuild.log | head -10
+            exit $BUILD_RESULT
+          fi
 
           # 2. Créer ExportOptions.plist
           /usr/libexec/PlistBuddy -c "Clear dict" /tmp/ExportOptions.plist
