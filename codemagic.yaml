@@ -25,34 +25,28 @@ workflows:
         script: cd ios && pod install
       - name: Set up code signing
         script: |
-          # 1. Télécharger le certificat + le profile existant depuis Apple Developer
-          #    PAS de --create : on veut le profile "Fieldz AppStore Codemagic"
-          #    créé manuellement, qui contient Sign In with Apple.
+          # 1. Télécharger le certificat depuis Apple Developer
           app-store-connect fetch-signing-files "com.fieldz.app" \
-            --type IOS_APP_STORE
+            --type IOS_APP_STORE \
+            --create
 
           # 2. Installer le certificat dans le keychain
           keychain initialize
           keychain add-certificates
 
-          # 3. Diagnostic : vérifier les profiles téléchargés
-          echo "=== Provisioning profiles installés ==="
-          for p in "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision; do
-            [ -f "$p" ] || continue
-            security cms -D -i "$p" 2>/dev/null > /tmp/decoded_profile.plist
-            PNAME=$(grep -A1 "<key>Name</key>" /tmp/decoded_profile.plist | tail -1 | sed 's/.*<string>//;s/<\/string>.*//')
-            HAS_APPLE=$(grep -c "applesignin" /tmp/decoded_profile.plist || true)
-            if [ "$HAS_APPLE" -gt 0 ]; then
-              echo "  $PNAME — Sign In with Apple OK"
-            else
-              echo "  $PNAME — PAS de Sign In with Apple"
-            fi
-          done
+          # 3. Installer NOTRE profile manuellement (celui avec Sign In with Apple)
+          #    Le profile est encodé en base64 dans la variable PROVISIONING_PROFILE_FIELDZ
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          echo "$PROVISIONING_PROFILE_FIELDZ" | base64 --decode > "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision"
+          echo "Profile installé: $(ls -la "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision")"
 
-          # 4. Configurer le projet Xcode avec les profiles
-          xcode-project use-profiles
+          # 4. Vérifier que le profile a la capability
+          security cms -D -i "$PROFILES_DIR/bf6cea08-b84c-4c0a-9c55-651b446e3ecb.mobileprovision" 2>/dev/null | grep -q "applesignin" \
+            && echo "Sign In with Apple OK dans le profile" \
+            || echo "ERREUR: Sign In with Apple ABSENT du profile"
 
-          # 5. Forcer l'entitlement Sign In with Apple
+          # 5. Forcer l'entitlement dans le projet Xcode
           ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" -not -path "*/Pods/*" | head -1)
           echo "Fichier entitlements: $ENTITLEMENTS_FILE"
           if [ -n "$ENTITLEMENTS_FILE" ] && ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
@@ -61,6 +55,10 @@ workflows:
             /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENTITLEMENTS_FILE"
           fi
           cat "$ENTITLEMENTS_FILE"
+
+          # 6. Lister TOUS les profiles installés (diagnostic)
+          echo "=== Tous les profiles installés ==="
+          ls -la "$PROFILES_DIR/"
       - name: Increment build number
         script: |
           cd ios
@@ -84,7 +82,8 @@ workflows:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="M9C2G4BV44" \
-            PROVISIONING_PROFILE_SPECIFIER="Fieldz AppStore Codemagic"
+            PROVISIONING_PROFILE_SPECIFIER="Fieldz AppStore Codemagic" \
+            PROVISIONING_PROFILE="bf6cea08-b84c-4c0a-9c55-651b446e3ecb"
 
           # 2. Créer ExportOptions.plist
           /usr/libexec/PlistBuddy -c "Clear dict" /tmp/ExportOptions.plist
