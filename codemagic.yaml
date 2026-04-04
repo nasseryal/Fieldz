@@ -25,28 +25,34 @@ workflows:
         script: cd ios && pod install
       - name: Set up code signing
         script: |
+          # 1. Télécharger le certificat + le profile existant depuis Apple Developer
+          #    PAS de --create : on veut le profile "Fieldz AppStore Codemagic"
+          #    créé manuellement, qui contient Sign In with Apple.
+          app-store-connect fetch-signing-files "com.fieldz.app" \
+            --type IOS_APP_STORE
+
+          # 2. Installer le certificat dans le keychain
           keychain initialize
           keychain add-certificates
 
-          # Diagnostic : lister les profiles installés et vérifier la capability
+          # 3. Diagnostic : vérifier les profiles téléchargés
           echo "=== Provisioning profiles installés ==="
           for p in "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision; do
             [ -f "$p" ] || continue
             security cms -D -i "$p" 2>/dev/null > /tmp/decoded_profile.plist
             PNAME=$(grep -A1 "<key>Name</key>" /tmp/decoded_profile.plist | tail -1 | sed 's/.*<string>//;s/<\/string>.*//')
-            PUUID=$(grep -A1 "<key>UUID</key>" /tmp/decoded_profile.plist | tail -1 | sed 's/.*<string>//;s/<\/string>.*//')
             HAS_APPLE=$(grep -c "applesignin" /tmp/decoded_profile.plist || true)
             if [ "$HAS_APPLE" -gt 0 ]; then
-              echo "  $PNAME (UUID: $PUUID) — Sign In with Apple OK"
+              echo "  $PNAME — Sign In with Apple OK"
             else
-              echo "  $PNAME (UUID: $PUUID) — PAS de Sign In with Apple"
+              echo "  $PNAME — PAS de Sign In with Apple"
             fi
           done
 
-          # Installer les profiles sur la machine et configurer le projet Xcode
+          # 4. Configurer le projet Xcode avec les profiles
           xcode-project use-profiles
 
-          # Forcer le entitlement Sign In with Apple dans le fichier .entitlements
+          # 5. Forcer l'entitlement Sign In with Apple
           ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" -not -path "*/Pods/*" | head -1)
           echo "Fichier entitlements: $ENTITLEMENTS_FILE"
           if [ -n "$ENTITLEMENTS_FILE" ] && ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
