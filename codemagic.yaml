@@ -21,27 +21,41 @@ workflows:
         script: echo $GOOGLE_SERVICE_INFO_PLIST | base64 --decode > $CM_BUILD_DIR/GoogleService-Info.plist
       - name: Generate native project
         script: npx expo prebuild --clean --platform ios
-      - name: Ensure Sign In with Apple entitlement
-        script: |
-          # expo prebuild avec usesAppleSignIn:true devrait générer l'entitlement,
-          # mais on vérifie et on le force si absent
-          ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" | head -1)
-          echo "Fichier entitlements trouvé: $ENTITLEMENTS_FILE"
-          cat "$ENTITLEMENTS_FILE"
-          if ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
-            echo "Sign In with Apple entitlement MANQUANT — ajout..."
-            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENTITLEMENTS_FILE"
-            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENTITLEMENTS_FILE"
-          fi
-          echo "=== Entitlements final ==="
-          cat "$ENTITLEMENTS_FILE"
       - name: Install CocoaPods
         script: cd ios && pod install
       - name: Set up code signing
         script: |
+          # Le profile "Fieldz AppStore Codemagic" est uploadé manuellement
+          # dans Codemagic (Settings > Code signing identities > iOS provisioning profiles).
+          # Il contient la capability Sign In with Apple.
           keychain initialize
           keychain add-certificates
           xcode-project use-profiles
+      - name: Force Sign In with Apple entitlement AFTER code signing setup
+        script: |
+          # use-profiles a pu écraser les entitlements.
+          # On force l'entitlement Sign In with Apple APRÈS use-profiles.
+          ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" -not -path "*/Pods/*" | head -1)
+          echo "Fichier entitlements: $ENTITLEMENTS_FILE"
+
+          if [ -z "$ENTITLEMENTS_FILE" ]; then
+            echo "ERREUR: Aucun fichier .entitlements trouvé!"
+            exit 1
+          fi
+
+          echo "=== Entitlements AVANT correction ==="
+          cat "$ENTITLEMENTS_FILE"
+
+          if ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
+            echo "Sign In with Apple MANQUANT — ajout forcé..."
+            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENTITLEMENTS_FILE"
+            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENTITLEMENTS_FILE"
+          else
+            echo "Sign In with Apple déjà présent."
+          fi
+
+          echo "=== Entitlements APRÈS correction ==="
+          cat "$ENTITLEMENTS_FILE"
       - name: Increment build number
         script: |
           cd ios
