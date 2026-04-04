@@ -1,0 +1,69 @@
+workflows:
+  ios-development:
+    name: iOS Development Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      node: 18
+      xcode: latest
+      cocoapods: default
+      groups:
+        - firebase
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.fieldz.app
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Generate native project
+        script: npx expo prebuild --clean --platform ios
+      - name: Install CocoaPods
+        script: cd ios && pod install
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/Fieldz.xcworkspace" \
+            --scheme "Fieldz"
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+  ios-production:
+    name: iOS Production Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      node: 18
+      xcode: latest
+      cocoapods: default
+      groups:
+        - firebase
+      vars:
+        APP_STORE_APP_ID: "6761498061"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.fieldz.app
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Generate native project
+        script: npx expo prebuild --clean --platform ios
+      - name: Install CocoaPods
+        script: cd ios && pod install
+      - name: Increment build number
+        script: |
+          cd ios
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/Fieldz.xcworkspace" \
+            --scheme "Fieldz"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
