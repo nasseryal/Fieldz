@@ -21,6 +21,11 @@ workflows:
         script: echo $GOOGLE_SERVICE_INFO_PLIST | base64 --decode > $CM_BUILD_DIR/GoogleService-Info.plist
       - name: Generate native project
         script: npx expo prebuild --clean --platform ios
+      - name: Set Node path for Xcode
+        script: |
+          # React Native lit ce fichier pour trouver Node pendant le build
+          echo "export NODE_BINARY=$(which node)" > ios/.xcode.env.local
+          cat ios/.xcode.env.local
       - name: Install CocoaPods
         script: cd ios && pod install
       - name: Set up code signing
