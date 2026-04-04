@@ -28,8 +28,10 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['signalements', 'photos', 'updatedAt']);
 
+      // Suppression par le créateur ou un admin
       allow delete: if request.auth != null
-        && resource.data.ajoutePar == request.auth.uid;
+        && (resource.data.ajoutePar == request.auth.uid
+            || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
       // Commentaires communautaires sur les spots
       match /comments/{commentId} {

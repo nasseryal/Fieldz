@@ -1,5 +1,5 @@
 // Écran Profil — infos utilisateur, stats, déconnexion, suppression compte
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useAuth } from '../hooks/useAuth';
 import { signOut, deleteAccount } from '../services/auth';
 import { FieldzLogo } from '../components/FieldzLogo';
 import Constants from 'expo-constants';
+import { AdminScreen } from './AdminScreen';
 
 // Email admin — dans une variable d'env pour ne pas être en dur
 const ADMIN_EMAIL = process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? '';
@@ -25,6 +26,12 @@ const ADMIN_EMAIL = process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? '';
 export const ProfileScreen: React.FC = () => {
   const { user, profile } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  // Si l'admin ouvre le panel admin, on affiche l'écran admin
+  if (showAdmin && isAdmin) {
+    return <AdminScreen onBack={() => setShowAdmin(false)} />;
+  }
 
   const handleSignOut = () => {
     Alert.alert(
@@ -135,6 +142,19 @@ export const ProfileScreen: React.FC = () => {
             onPress={handleContact}
           />
         </Animated.View>
+
+        {/* Admin (visible uniquement pour les admins) */}
+        {isAdmin && (
+          <Animated.View entering={FadeInDown.delay(350)}>
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => setShowAdmin(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.adminText}>Administration</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* Déconnexion */}
         <Animated.View entering={FadeInDown.delay(400)}>
@@ -317,6 +337,21 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     fontSize: FontSizes.md,
     color: Colors.error,
+  },
+  adminButton: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: Colors.accent + '15',
+    borderWidth: 1,
+    borderColor: Colors.accent + '40',
+    alignItems: 'center',
+  },
+  adminText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: FontSizes.md,
+    color: Colors.accent,
   },
   version: {
     fontFamily: 'DMSans_400Regular',
