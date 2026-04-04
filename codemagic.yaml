@@ -39,9 +39,6 @@ workflows:
         script: cd ios && pod install
       - name: Set up code signing
         script: |
-          app-store-connect fetch-signing-files "com.fieldz.app" \
-            --type IOS_APP_STORE \
-            --create
           keychain initialize
           keychain add-certificates
           xcode-project use-profiles
