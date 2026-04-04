@@ -43,6 +43,9 @@ workflows:
             fi
           done
 
+          # Installer les profiles sur la machine et configurer le projet Xcode
+          xcode-project use-profiles
+
           # Forcer le entitlement Sign In with Apple dans le fichier .entitlements
           ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" -not -path "*/Pods/*" | head -1)
           echo "Fichier entitlements: $ENTITLEMENTS_FILE"
