@@ -13,6 +13,7 @@ workflows:
         - firebase
       vars:
         APP_STORE_APP_ID: "6761498061"
+        SENTRY_DISABLE_AUTO_UPLOAD: "true"
     scripts:
       - name: Install dependencies
         script: npm install
@@ -36,6 +37,11 @@ workflows:
           cat "$ENTITLEMENTS_FILE"
       - name: Install CocoaPods
         script: cd ios && pod install
+      - name: Ensure Sign In with Apple capability on App ID
+        script: |
+          app-store-connect bundle-ids enable-capabilities \
+            --bundle-id-identifier com.fieldz.app \
+            --capability SIGN_IN_WITH_APPLE
       - name: Set up code signing
         script: |
           app-store-connect fetch-signing-files "com.fieldz.app" \
