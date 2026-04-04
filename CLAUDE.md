@@ -29,6 +29,11 @@ Les règles universelles (actions interdites, local ≠ distant, preuve obligato
 
 ---
 
+## MÉTHODE DE TRAVAIL
+- Après CHAQUE modification de code, appeler un agent neutre pour vérifier que la modification est correcte et n'a rien cassé. Pas d'exception.
+
+---
+
 ## STACK TECHNIQUE
 - React Native + Expo SDK 54 + TypeScript
 - Firebase Auth (email + Apple Sign In) + Firestore + Storage

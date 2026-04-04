@@ -7,6 +7,7 @@ import { FontSizes } from '../constants/typography';
 import { Spot, SportConfig } from '../types';
 import { PhotoCarousel } from './PhotoCarousel';
 import { AccessBadge } from './AccessBadge';
+import { auth } from '../services/firebase';
 
 interface SportDetailScreenProps {
   spot: Spot;
@@ -114,6 +115,30 @@ export const SportDetailScreen: React.FC<SportDetailScreenProps> = ({ spot, onBa
             }} activeOpacity={0.8}>
             <Text style={[styles.actionButtonText, { color: Colors.error }]}>⚠️ Signaler une erreur</Text>
           </TouchableOpacity>
+          {auth.currentUser && spot.ajoutePar === auth.currentUser.uid && (
+            <TouchableOpacity style={[styles.actionButton, styles.actionButtonDelete]} onPress={() => {
+                Alert.alert(
+                  'Supprimer ce spot',
+                  'Cette action est irréversible. Le spot sera supprimé définitivement.',
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Supprimer', style: 'destructive', onPress: async () => {
+                      try {
+                        const { doc, deleteDoc } = await import('firebase/firestore');
+                        const { db } = await import('../services/firebase');
+                        await deleteDoc(doc(db, 'spots', spot.id));
+                        Alert.alert('Spot supprimé', 'Le spot a été supprimé.');
+                        onBack();
+                      } catch {
+                        Alert.alert('Erreur', 'Impossible de supprimer le spot.');
+                      }
+                    }},
+                  ]
+                );
+              }} activeOpacity={0.8}>
+              <Text style={[styles.actionButtonText, { color: Colors.error }]}>🗑️ Supprimer ce spot</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -145,5 +170,6 @@ const styles = StyleSheet.create({
   actionButton: { paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
   actionButtonOutline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
   actionButtonDanger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(244,67,54,0.3)' },
+  actionButtonDelete: { backgroundColor: 'rgba(244,67,54,0.1)', borderWidth: 1, borderColor: 'rgba(244,67,54,0.5)' },
   actionButtonText: { fontFamily: 'DMSans_600SemiBold', fontSize: FontSizes.md, color: '#FFFFFF' },
 });

@@ -64,6 +64,14 @@ const SPORT_SCREENS: Record<string, React.ComponentType<any>> = {
 
 const Tab = createBottomTabNavigator();
 
+// Configure NetInfo pour pinger Google et vérifier la vraie connexion internet
+NetInfo.configure({
+  reachabilityUrl: 'https://clients3.google.com/generate_204',
+  reachabilityTest: async (response) => response.status === 204,
+  reachabilityLongTimeout: 30 * 1000,
+  reachabilityShortTimeout: 5 * 1000,
+});
+
 // Thème sombre pour la navigation
 const navigationTheme = {
   dark: true,
@@ -188,13 +196,13 @@ function App() {
   // Détecte si l'utilisateur est hors ligne
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOffline(state.isConnected === false);
+      setIsOffline(state.isInternetReachable === false);
     });
     // Rafraîchit au retour au premier plan (iOS ne notifie pas toujours depuis le Control Center)
     const appStateSub = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
         NetInfo.fetch().then(state => {
-          setIsOffline(state.isConnected === false);
+          setIsOffline(state.isInternetReachable === false);
         });
       }
     });
