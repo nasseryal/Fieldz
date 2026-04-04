@@ -37,11 +37,6 @@ workflows:
           cat "$ENTITLEMENTS_FILE"
       - name: Install CocoaPods
         script: cd ios && pod install
-      - name: Ensure Sign In with Apple capability on App ID
-        script: |
-          app-store-connect bundle-ids enable-capabilities \
-            --bundle-id-identifier com.fieldz.app \
-            --capability "Sign In with Apple"
       - name: Set up code signing
         script: |
           app-store-connect fetch-signing-files "com.fieldz.app" \
