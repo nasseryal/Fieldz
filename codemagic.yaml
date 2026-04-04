@@ -25,36 +25,32 @@ workflows:
         script: cd ios && pod install
       - name: Set up code signing
         script: |
-          # Le profile "Fieldz AppStore Codemagic" est uploadé manuellement
-          # dans Codemagic (Settings > Code signing identities > iOS provisioning profiles).
-          # Il contient la capability Sign In with Apple.
           keychain initialize
           keychain add-certificates
-          xcode-project use-profiles
-      - name: Force Sign In with Apple entitlement AFTER code signing setup
-        script: |
-          # use-profiles a pu écraser les entitlements.
-          # On force l'entitlement Sign In with Apple APRÈS use-profiles.
+
+          # Diagnostic : lister les profiles installés et vérifier la capability
+          echo "=== Provisioning profiles installés ==="
+          for p in "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision; do
+            [ -f "$p" ] || continue
+            security cms -D -i "$p" 2>/dev/null > /tmp/decoded_profile.plist
+            PNAME=$(grep -A1 "<key>Name</key>" /tmp/decoded_profile.plist | tail -1 | sed 's/.*<string>//;s/<\/string>.*//')
+            PUUID=$(grep -A1 "<key>UUID</key>" /tmp/decoded_profile.plist | tail -1 | sed 's/.*<string>//;s/<\/string>.*//')
+            HAS_APPLE=$(grep -c "applesignin" /tmp/decoded_profile.plist || true)
+            if [ "$HAS_APPLE" -gt 0 ]; then
+              echo "  $PNAME (UUID: $PUUID) — Sign In with Apple OK"
+            else
+              echo "  $PNAME (UUID: $PUUID) — PAS de Sign In with Apple"
+            fi
+          done
+
+          # Forcer le entitlement Sign In with Apple dans le fichier .entitlements
           ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" -not -path "*/Pods/*" | head -1)
           echo "Fichier entitlements: $ENTITLEMENTS_FILE"
-
-          if [ -z "$ENTITLEMENTS_FILE" ]; then
-            echo "ERREUR: Aucun fichier .entitlements trouvé!"
-            exit 1
-          fi
-
-          echo "=== Entitlements AVANT correction ==="
-          cat "$ENTITLEMENTS_FILE"
-
-          if ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
-            echo "Sign In with Apple MANQUANT — ajout forcé..."
+          if [ -n "$ENTITLEMENTS_FILE" ] && ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
+            echo "Ajout de Sign In with Apple dans les entitlements..."
             /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENTITLEMENTS_FILE"
             /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENTITLEMENTS_FILE"
-          else
-            echo "Sign In with Apple déjà présent."
           fi
-
-          echo "=== Entitlements APRÈS correction ==="
           cat "$ENTITLEMENTS_FILE"
       - name: Increment build number
         script: |
@@ -63,9 +59,39 @@ workflows:
           agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: Build iOS
         script: |
-          xcode-project build-ipa \
-            --workspace "ios/Fieldz.xcworkspace" \
-            --scheme "Fieldz"
+          # On utilise xcodebuild directement au lieu de xcode-project build-ipa
+          # pour passer EXPLICITEMENT le profile et le certificat.
+          # xcode-project build-ipa ne passait que CODE_SIGN_STYLE=Manual
+          # sans spécifier le profile → Xcode ne trouvait pas la capability.
+
+          # 1. Archive
+          xcodebuild \
+            -workspace "ios/Fieldz.xcworkspace" \
+            -scheme "Fieldz" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/ios/xcarchive/Fieldz.xcarchive" \
+            archive \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="M9C2G4BV44" \
+            PROVISIONING_PROFILE_SPECIFIER="Fieldz AppStore Codemagic"
+
+          # 2. Créer ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Clear dict" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :method string app-store" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :teamID string M9C2G4BV44" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :signingStyle string manual" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :signingCertificate string 'Apple Distribution'" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" /tmp/ExportOptions.plist
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.fieldz.app string 'Fieldz AppStore Codemagic'" /tmp/ExportOptions.plist
+          echo "=== ExportOptions.plist ==="
+          cat /tmp/ExportOptions.plist
+
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/build/ios/xcarchive/Fieldz.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist /tmp/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
