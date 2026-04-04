@@ -20,6 +20,20 @@ workflows:
         script: echo $GOOGLE_SERVICE_INFO_PLIST | base64 --decode > $CM_BUILD_DIR/GoogleService-Info.plist
       - name: Generate native project
         script: npx expo prebuild --clean --platform ios
+      - name: Ensure Sign In with Apple entitlement
+        script: |
+          # expo prebuild avec usesAppleSignIn:true devrait générer l'entitlement,
+          # mais on vérifie et on le force si absent
+          ENTITLEMENTS_FILE=$(find ios -name "*.entitlements" | head -1)
+          echo "Fichier entitlements trouvé: $ENTITLEMENTS_FILE"
+          cat "$ENTITLEMENTS_FILE"
+          if ! grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS_FILE"; then
+            echo "Sign In with Apple entitlement MANQUANT — ajout..."
+            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin array" "$ENTITLEMENTS_FILE"
+            /usr/libexec/PlistBuddy -c "Add :com.apple.developer.applesignin:0 string Default" "$ENTITLEMENTS_FILE"
+          fi
+          echo "=== Entitlements final ==="
+          cat "$ENTITLEMENTS_FILE"
       - name: Install CocoaPods
         script: cd ios && pod install
       - name: Set up code signing
