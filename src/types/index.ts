@@ -53,6 +53,16 @@ export interface MapFilters {
   acces: 'tous' | 'gratuit' | 'payant';
 }
 
+// Commentaire sur un spot
+export interface Comment {
+  id: string;
+  texte: string;
+  auteurNom: string;
+  auteurUid: string;
+  createdAt: Timestamp;
+  signalements: number;
+}
+
 // Coordonnées GPS
 export interface Coords {
   latitude: number;

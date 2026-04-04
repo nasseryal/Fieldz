@@ -30,6 +30,32 @@ service cloud.firestore {
 
       allow delete: if request.auth != null
         && resource.data.ajoutePar == request.auth.uid;
+
+      // Commentaires communautaires sur les spots
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if request.auth != null
+          && request.resource.data.texte is string
+          && request.resource.data.texte.size() >= 1
+          && request.resource.data.texte.size() <= 500
+          && request.resource.data.auteurUid == request.auth.uid;
+
+        // Signalement par tout utilisateur connecté
+        allow update: if request.auth != null
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['signalements']);
+
+        // Suppression par l'auteur ou un admin
+        allow delete: if request.auth != null
+          && (resource.data.auteurUid == request.auth.uid
+              || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      }
+    }
+
+    // Admins : lecture seule (les documents sont créés manuellement dans Firebase Console)
+    match /admins/{adminId} {
+      allow read: if request.auth != null;
     }
 
     // Profils utilisateur : chacun ne peut lire/modifier que son propre profil
