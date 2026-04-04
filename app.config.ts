@@ -21,7 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.fieldz.app',
       usesAppleSignIn: true,
       newArchEnabled: true,
-      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? './GoogleService-Info.plist',
+      googleServicesFile: './GoogleService-Info.plist',
       config: {
         googleMapsApiKey: googleMapsKey,
       },
