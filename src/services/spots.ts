@@ -10,6 +10,7 @@ import {
   limit,
   Timestamp,
   increment,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Spot, Coords } from '../types';
@@ -65,13 +66,20 @@ export const addSpot = async (
   return docRef.id;
 };
 
-// Signale un spot
-export const reportSpot = async (spotId: string) => {
+// Signale un spot avec une raison optionnelle
+export const reportSpot = async (spotId: string, raison?: string) => {
   const docRef = doc(db, SPOTS_COLLECTION, spotId);
-  await updateDoc(docRef, {
+  const updates: Record<string, unknown> = {
     signalements: increment(1),
     updatedAt: Timestamp.now(),
-  });
+  };
+  if (raison?.trim()) {
+    updates.signalementsDetails = arrayUnion({
+      raison: raison.trim(),
+      date: Timestamp.now(),
+    });
+  }
+  await updateDoc(docRef, updates);
 };
 
 // Filtre les spots par distance (côté client)

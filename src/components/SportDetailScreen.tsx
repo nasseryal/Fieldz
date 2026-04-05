@@ -217,21 +217,24 @@ export const SportDetailScreen: React.FC<SportDetailScreenProps> = ({ spot, onBa
             <Text style={[styles.actionButtonText, { color: Colors.text }]}>📸 Ajouter une photo</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionButton, styles.actionButtonDanger]} onPress={() => {
-              Alert.alert(
+              Alert.prompt(
                 'Signaler une erreur',
-                'Ce terrain contient des informations incorrectes ?',
+                'Décris le problème (terrain fermé, mauvaise adresse, doublon, etc.) :',
                 [
                   { text: 'Annuler', style: 'cancel' },
-                  { text: 'Signaler', style: 'destructive', onPress: async () => {
+                  { text: 'Signaler', style: 'destructive', onPress: async (raison: string | undefined) => {
                     try {
                       const { reportSpot } = await import('../services/spots');
-                      await reportSpot(spot.id);
+                      await reportSpot(spot.id, raison);
                       Alert.alert('Merci', 'Ton signalement a été pris en compte.');
                     } catch {
                       Alert.alert('Erreur', 'Impossible d\'envoyer le signalement.');
                     }
                   }},
-                ]
+                ],
+                'plain-text',
+                '',
+                'default'
               );
             }} activeOpacity={0.8}>
             <Text style={[styles.actionButtonText, { color: Colors.error }]}>⚠️ Signaler une erreur</Text>

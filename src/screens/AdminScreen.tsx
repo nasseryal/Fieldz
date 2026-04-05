@@ -64,8 +64,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onBack }) => {
       for (const spotDoc of allSpotsSnap.docs) {
         const commentsQuery = query(
           collection(db, 'spots', spotDoc.id, 'comments'),
-          where('signalements', '>', 0),
-          orderBy('signalements', 'desc')
+          where('signalements', '>', 0)
         );
         const commentsSnap = await getDocs(commentsQuery);
         commentsSnap.docs.forEach(c => {
@@ -199,6 +198,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onBack }) => {
                   </View>
                   <Text style={styles.cardMeta}>📍 {spot.ville} · {spot.sport}</Text>
                   <Text style={styles.cardMeta}>Ajouté par : {spot.ajoutePar ?? 'gouvernement'}</Text>
+                  {(spot as Spot & { signalementsDetails?: { raison: string }[] }).signalementsDetails?.map((s, i) => (
+                    <Text key={i} style={styles.commentPreview}>💬 {s.raison}</Text>
+                  ))}
                   <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteSpot(spot)}>
                     <Text style={styles.deleteButtonText}>Supprimer ce spot</Text>
                   </TouchableOpacity>
