@@ -76,9 +76,9 @@ workflows:
       - name: Increment build number
         script: |
           cd ios
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID")
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_APP_ID")
           NEXT_BUILD_NUMBER=$(($LATEST_BUILD_NUMBER + 1))
-          echo "Dernier build (TestFlight): $LATEST_BUILD_NUMBER → Prochain: $NEXT_BUILD_NUMBER"
+          echo "Dernier build (tous): $LATEST_BUILD_NUMBER → Prochain: $NEXT_BUILD_NUMBER"
           agvtool new-version -all $NEXT_BUILD_NUMBER
       - name: Build iOS
         script: |
