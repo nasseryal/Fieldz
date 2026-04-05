@@ -59,21 +59,20 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onBack }) => {
       // Commentaires signalés — on parcourt les spots signalés pour trouver leurs commentaires
       const allFlaggedComments: (Comment & { spotId: string; spotNom: string })[] = [];
 
-      // On récupère les commentaires signalés depuis tous les spots (limité aux 20 premiers spots)
-      const allSpotsSnap = await getDocs(query(collection(db, 'spots'), limit(100)));
+      // On récupère les commentaires depuis les spots signalés + les 50 premiers spots
+      const allSpotsSnap = await getDocs(query(collection(db, 'spots'), limit(50)));
       for (const spotDoc of allSpotsSnap.docs) {
-        const commentsQuery = query(
-          collection(db, 'spots', spotDoc.id, 'comments'),
-          where('signalements', '>', 0)
-        );
-        const commentsSnap = await getDocs(commentsQuery);
+        const commentsSnap = await getDocs(collection(db, 'spots', spotDoc.id, 'comments'));
         commentsSnap.docs.forEach(c => {
-          allFlaggedComments.push({
-            id: c.id,
-            ...c.data(),
-            spotId: spotDoc.id,
-            spotNom: spotDoc.data().nom ?? 'Spot inconnu',
-          } as Comment & { spotId: string; spotNom: string });
+          const data = c.data();
+          if (data.signalements > 0) {
+            allFlaggedComments.push({
+              id: c.id,
+              ...data,
+              spotId: spotDoc.id,
+              spotNom: spotDoc.data().nom ?? 'Spot inconnu',
+            } as Comment & { spotId: string; spotNom: string });
+          }
         });
       }
       allFlaggedComments.sort((a, b) => b.signalements - a.signalements);

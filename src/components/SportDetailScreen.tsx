@@ -220,18 +220,16 @@ export const SportDetailScreen: React.FC<SportDetailScreenProps> = ({ spot, onBa
               Alert.prompt(
                 'Signaler une erreur',
                 'Décris le problème (terrain fermé, mauvaise adresse, doublon, etc.) :',
-                [
-                  { text: 'Annuler', style: 'cancel' },
-                  { text: 'Signaler', style: 'destructive', onPress: async (raison: string | undefined) => {
-                    try {
-                      const { reportSpot } = await import('../services/spots');
-                      await reportSpot(spot.id, raison);
-                      Alert.alert('Merci', 'Ton signalement a été pris en compte.');
-                    } catch {
-                      Alert.alert('Erreur', 'Impossible d\'envoyer le signalement.');
-                    }
-                  }},
-                ],
+                async (raison: string) => {
+                  if (!raison?.trim()) return;
+                  try {
+                    const { reportSpot } = await import('../services/spots');
+                    await reportSpot(spot.id, raison);
+                    Alert.alert('Merci', 'Ton signalement a été pris en compte.');
+                  } catch {
+                    Alert.alert('Erreur', 'Impossible d\'envoyer le signalement.');
+                  }
+                },
                 'plain-text',
                 '',
                 'default'
