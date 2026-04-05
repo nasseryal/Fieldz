@@ -147,7 +147,7 @@ export const HomeMapScreen: React.FC<HomeMapScreenProps> = ({ onSpotDetails }) =
       {/* Bottom sheet quand un spot est sélectionné */}
       {selectedSpot && (
         <Animated.View
-          entering={SlideInDown.springify().damping(20)}
+          entering={SlideInDown.duration(350).damping(28).stiffness(120)}
           exiting={SlideOutDown}
           style={styles.bottomSheet}
         >
